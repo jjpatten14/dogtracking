@@ -1,0 +1,95 @@
+{
+  "reference_points": [
+    {
+      "id": 1,
+      "type": "building corner house corner",
+      "baseline_position": [
+        1270,
+        417
+      ],
+      "confidence": 0.3476521372795105,
+      "timestamp": 1752191170.305562,
+      "class": "building corner house corner"
+    },
+    {
+      "id": 2,
+      "type": "roof edge",
+      "baseline_position": [
+        1275,
+        357
+      ],
+      "confidence": 0.3286497890949249,
+      "timestamp": 1752191170.305562,
+      "class": "roof edge"
+    },
+    {
+      "id": 3,
+      "type": "utility pole telephone pole",
+      "baseline_position": [
+        1403,
+        341
+      ],
+      "confidence": 0.3160730004310608,
+      "timestamp": 1752191170.305562,
+      "class": "utility pole telephone pole"
+    },
+    {
+      "id": 4,
+      "type": "large tree",
+      "baseline_position": [
+        561,
+        517
+      ],
+      "confidence": 0.3086058497428894,
+      "timestamp": 1752191170.305562,
+      "class": "large tree"
+    },
+    {
+      "id": 5,
+      "type": "utility pole telephone pole",
+      "baseline_position": [
+        1401,
+        344
+      ],
+      "confidence": 0.29477983713150024,
+      "timestamp": 1752191170.305562,
+      "class": "utility pole telephone pole"
+    },
+    {
+      "id": 6,
+      "type": "large tree",
+      "baseline_position": [
+        273,
+        519
+      ],
+      "confidence": 0.27232101559638977,
+      "timestamp": 1752191170.305562,
+      "class": "large tree"
+    },
+    {
+      "id": 7,
+      "type": "roof edge",
+      "baseline_position": [
+        1177,
+        355
+      ],
+      "confidence": 0.26884469389915466,
+      "timestamp": 1752191170.305562,
+      "class": "roof edge"
+    },
+    {
+      "id": 8,
+      "type": "utility pole telephone pole",
+      "baseline_position": [
+        1403,
+        342
+      ],
+      "confidence": 0.2654578685760498,
+      "timestamp": 1752191170.305562,
+      "class": "utility pole telephone pole"
+    }
+  ],
+  "baseline_established": true,
+  "baseline_timestamp": 1752191170.305562,
+  "camera_id": 1
+}

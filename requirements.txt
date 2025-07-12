@@ -1,0 +1,85 @@
+# Multi-Camera Dog Tracking System - Dependencies
+# Optimized for Jetson Orin Nano
+
+# Existing Dependencies (Keep Current Versions)
+flask==2.3.3
+opencv-python==4.8.1.78
+numpy==1.24.3
+pillow==10.0.0
+flask-socketio==5.3.4
+eventlet==0.33.3
+requests==2.31.0
+
+# Core ML/AI Framework for Jetson
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# MegaDetector and Wildlife Detection
+PytorchWildlife>=1.1.0
+
+# Extended Computer Vision
+opencv-contrib-python>=4.8.0
+scikit-image>=0.21.0
+
+# Web Framework Extensions
+Flask-CORS>=4.0.0
+
+# Numerical Computing
+pandas>=2.0.0
+scipy>=1.10.0
+
+# Image Processing and Graphics
+matplotlib>=3.7.0
+
+# Async and Networking Extensions
+urllib3>=2.0.0
+websockets>=11.0.0
+
+# Machine Learning Utilities
+scikit-learn>=1.3.0
+joblib>=1.3.0
+tqdm>=4.65.0
+
+# Face Recognition and ArcFace
+face-recognition>=1.3.0
+insightface>=0.7.3
+onnxruntime>=1.15.0
+
+# Configuration and Utilities
+python-dotenv>=1.0.0
+configparser>=6.0.0
+jsonschema>=4.18.0
+
+# Jetson-Specific (Install manually on Jetson)
+# jetson-stats>=4.2.0
+
+# Performance Monitoring
+psutil>=5.9.0
+memory-profiler>=0.61.0
+
+# Logging and Monitoring
+loguru>=0.7.0
+
+# Data Serialization
+msgpack>=1.0.5
+
+# Image Codecs and Processing
+imageio>=2.31.0
+imageio-ffmpeg>=0.4.8
+
+# Mathematical Operations for Advanced Features
+sympy>=1.12
+numba>=0.57.0
+
+# Time and Scheduling
+schedule>=1.2.0
+watchdog>=3.0.0
+
+# Development Tools (Optional)
+pytest>=7.4.0
+black>=23.7.0
+flake8>=6.0.0
+
+# Note: PyTorch should be installed with CUDA support for Jetson
+# Use: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118

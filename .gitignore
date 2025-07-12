@@ -1,0 +1,84 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Temporary TTS Audio Files
+tmp*.wav
+output.wav
+test_output.wav
+tts_audio_*.wav
+
+# Log Files
+*.log
+*.logs
+
+# Model Files (too large for GitHub)
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.pkl
+models/*.h5
+models/*.pb
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Config Files with Sensitive Data
+config.ini
+secrets.json
+.env
+
+# Build/Distribution
+build/
+dist/
+*.egg-info/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# Documentation Build
+docs/_build/
+
+# Coverage Reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+
+# Node modules (if any web dependencies)
+node_modules/
+
+# Backup Files
+*.bak
+*.backup
+*.old
+
+# Windows Batch Output
+*.bat.tmp
+
+# Camera Snapshots (keep structure but not files)
+snapshots/*
+!snapshots/.gitkeep
