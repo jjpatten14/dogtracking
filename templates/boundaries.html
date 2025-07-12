@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boundary Configuration - Dog Tracking System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Dog Tracking System</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="{{ url_for('monitor') }}" class="nav-link">
+                        <span class="nav-text">Live Monitor</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{{ url_for('boundaries') }}" class="nav-link">
+                        <span class="nav-text">Boundaries</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('dogs') }}" class="nav-link">
+                        <span class="nav-text">Dogs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('tts') }}" class="nav-link">
+                        <span class="nav-text">Text-to-Speech</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('settings') }}" class="nav-link">
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('history') }}" class="nav-link">
+                        <span class="nav-text">History</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <div class="top-header">
+                <h1>Boundary Configuration</h1>
+                <div class="status-indicator online">
+                    Drawing Tools Active
+                </div>
+            </div>
+
+            <!-- Boundary Content -->
+            <div class="boundary-container">
+                <!-- Camera Selection Panel -->
+                <div class="boundary-panel">
+                    <div class="panel-header">
+                        <h3>Camera Selection</h3>
+                        <div class="camera-info">
+                            <span id="cameraResolution">1920x1080</span>
+                            <span id="cameraStatus" class="status-badge online">Online</span>
+                        </div>
+                    </div>
+                    
+                    <div class="camera-selection">
+                        <div class="form-group">
+                            <label for="cameraSelect">Select Camera:</label>
+                            <select id="cameraSelect" class="form-select">
+                                <option value="1" selected>Camera 1 - Front Yard</option>
+                                <option value="2">Camera 2 - Side Yard</option>
+                                <option value="3">Camera 3 - Back Yard</option>
+                                <option value="4">Camera 4 - Gate Area</option>
+                                <option value="5">Camera 5 - Deck Area</option>
+                                <option value="6">Camera 6 - Shed Area</option>
+                                <option value="7">Camera 7 - Driveway</option>
+                                <option value="8">Camera 8 - Perimeter</option>
+                                <option value="9">Camera 9 - Pool Area</option>
+                                <option value="10">Camera 10 - Garden</option>
+                                <option value="11">Camera 11 - North Side</option>
+                                <option value="12">Camera 12 - South Side</option>
+                            </select>
+                        </div>
+                        
+                        <div class="camera-controls">
+                            <button class="btn btn-secondary" id="testCameraBtn">Test Camera</button>
+                            <button class="btn btn-secondary" id="refreshFeedBtn">Refresh Feed</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera View Panel -->
+                <div class="camera-view-panel">
+                    <div class="panel-header">
+                        <h3>Camera View - Boundary Drawing</h3>
+                        <div class="view-controls">
+                            <button class="btn btn-secondary" id="zoomInBtn">Zoom In</button>
+                            <button class="btn btn-secondary" id="zoomOutBtn">Zoom Out</button>
+                            <button class="btn btn-secondary" id="resetZoomBtn">Reset</button>
+                        </div>
+                    </div>
+                    
+                    <div class="camera-view-container">
+                        <div class="video-wrapper" style="position: relative;">
+                            <img id="boundaryVideoFeed" src="/video_feed?camera=1" alt="Camera Feed" class="boundary-camera-feed">
+                            <canvas id="boundaryCanvas" class="boundary-drawing-canvas"></canvas>
+                            <div class="drawing-overlay">
+                                <div class="crosshair" id="crosshair" style="display: none;"></div>
+                                <div class="coordinate-display" id="coordinateDisplay"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="reference-points-overlay" id="referencePointsOverlay">
+                            <!-- Reference points will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boundary Tools Panel -->
+                <div class="boundary-tools-panel">
+                    <div class="panel-header">
+                        <h3>Drawing Tools</h3>
+                        <div class="tool-status">
+                            <span id="drawingStatus">Ready</span>
+                        </div>
+                    </div>
+                    
+                    <div class="boundary-tools">
+                        <div class="tool-section">
+                            <h4>Boundary Actions</h4>
+                            <div class="tool-buttons">
+                                <button class="btn btn-primary" id="startDrawingBtn">Draw New Boundary</button>
+                                <button class="btn btn-secondary" id="editBoundaryBtn" disabled>Edit Selected</button>
+                                <button class="btn btn-warning" id="finishBoundaryBtn" disabled>Finish Drawing</button>
+                                <button class="btn btn-secondary" id="cancelDrawingBtn" disabled>Cancel</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-section">
+                            <h4>Boundary Management</h4>
+                            <div class="tool-buttons">
+                                <button class="btn btn-success" id="saveBoundaryBtn" disabled>Save All to File</button>
+                                <button class="btn btn-secondary" id="loadBoundariesBtn">Load from File</button>
+                                <button class="btn btn-danger" id="deleteBoundaryBtn" disabled>Delete Selected</button>
+                                <button class="btn btn-danger" id="clearAllBtn">Clear All</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-section">
+                            <h4>Reference Points</h4>
+                            <div class="tool-buttons">
+                                <button class="btn btn-secondary" id="showReferenceBtn">Show Reference Points</button>
+                                <button class="btn btn-secondary" id="calibrateRefBtn">Calibrate References</button>
+                                <button class="btn btn-secondary" id="addReferenceBtn">Add Reference Point</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="drawing-settings">
+                        <h4>Drawing Settings</h4>
+                        <div class="form-group">
+                            <label for="boundaryName">Boundary Name:</label>
+                            <input type="text" id="boundaryName" class="form-control" placeholder="e.g., Front Gate Area">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="boundaryType">Boundary Type:</label>
+                            <select id="boundaryType" class="form-select">
+                                <option value="restricted">Restricted Zone</option>
+                                <option value="safe">Safe Zone</option>
+                                <option value="alert">Alert Zone</option>
+                                <option value="monitoring">Monitoring Zone</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="boundaryPriority">Priority Level:</label>
+                            <select id="boundaryPriority" class="form-select">
+                                <option value="high">High Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="low">Low Priority</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boundary List Panel -->
+                <div class="boundary-list-panel">
+                    <div class="panel-header">
+                        <h3>Existing Boundaries</h3>
+                        <div class="list-controls">
+                            <button class="btn btn-secondary btn-small" id="refreshListBtn">Refresh</button>
+                            <button class="btn btn-secondary btn-small" id="exportBoundariesBtn">Export</button>
+                        </div>
+                    </div>
+                    
+                    <div class="boundary-list">
+                        <div class="boundary-item active" data-boundary="1">
+                            <div class="boundary-info">
+                                <div class="boundary-name">Front Gate Area</div>
+                                <div class="boundary-details">
+                                    <span class="boundary-type restricted">Restricted</span>
+                                    <span class="boundary-camera">Camera 1</span>
+                                    <span class="boundary-points">5 points</span>
+                                </div>
+                            </div>
+                            <div class="boundary-actions">
+                                <button class="btn btn-small btn-secondary">Edit</button>
+                                <button class="btn btn-small btn-danger">Delete</button>
+                            </div>
+                        </div>
+                        
+                        <div class="boundary-item" data-boundary="2">
+                            <div class="boundary-info">
+                                <div class="boundary-name">Back Fence Line</div>
+                                <div class="boundary-details">
+                                    <span class="boundary-type alert">Alert</span>
+                                    <span class="boundary-camera">Camera 3</span>
+                                    <span class="boundary-points">8 points</span>
+                                </div>
+                            </div>
+                            <div class="boundary-actions">
+                                <button class="btn btn-small btn-secondary">Edit</button>
+                                <button class="btn btn-small btn-danger">Delete</button>
+                            </div>
+                        </div>
+                        
+                        <div class="boundary-item" data-boundary="3">
+                            <div class="boundary-info">
+                                <div class="boundary-name">Pool Safety Zone</div>
+                                <div class="boundary-details">
+                                    <span class="boundary-type safe">Safe</span>
+                                    <span class="boundary-camera">Camera 9</span>
+                                    <span class="boundary-points">6 points</span>
+                                </div>
+                            </div>
+                            <div class="boundary-actions">
+                                <button class="btn btn-small btn-secondary">Edit</button>
+                                <button class="btn btn-small btn-danger">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration Panel -->
+                <div class="boundary-config-panel">
+                    <div class="panel-header">
+                        <h3>Boundary Configuration</h3>
+                    </div>
+                    
+                    <div class="config-content">
+                        <div class="config-section">
+                            <h4>Global Settings</h4>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="enableDynamicBoundaries" checked>
+                                    <span class="checkmark"></span>
+                                    Enable Dynamic Boundaries
+                                </label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="showBoundariesOnMonitor" checked>
+                                    <span class="checkmark"></span>
+                                    Show Boundaries on Monitor
+                                </label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="boundaryOpacity">Boundary Opacity:</label>
+                                <input type="range" id="boundaryOpacity" min="0.1" max="1" step="0.1" value="0.7" class="form-range">
+                                <span class="range-value">70%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="config-section">
+                            <h4>Reference Point Settings</h4>
+                            <div class="form-group">
+                                <label for="referencePointTolerance">Movement Tolerance:</label>
+                                <input type="range" id="referencePointTolerance" min="1" max="50" value="10" class="form-range">
+                                <span class="range-value">10px</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="autoRecalibrate" checked>
+                                    <span class="checkmark"></span>
+                                    Auto-Recalibrate References
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="config-actions">
+                            <button class="btn btn-primary" id="saveConfigBtn">Save Configuration</button>
+                            <button class="btn btn-secondary" id="resetConfigBtn">Reset to Defaults</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Status Messages -->
+    <div class="status-messages" id="statusMessages"></div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/boundary-drawing.js') }}"></script>
+</body>
+</html>

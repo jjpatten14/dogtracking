@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Tracking System - Live Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        // Redirect to the new monitor page
+        window.location.href = "{{ url_for('monitor') }}";
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Dog Tracking System</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="{{ url_for('monitor') }}" class="nav-link">
+                        <span class="nav-text">Live Monitor</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('boundaries') }}" class="nav-link">
+                        <span class="nav-text">Boundaries</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('dogs') }}" class="nav-link">
+                        <span class="nav-text">Dogs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('tts') }}" class="nav-link">
+                        <span class="nav-text">Text-to-Speech</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('settings') }}" class="nav-link">
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('history') }}" class="nav-link">
+                        <span class="nav-text">History</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="redirect-message">
+            <h2>Redirecting to Live Monitor...</h2>
+            <p>If you are not redirected automatically, <a href="{{ url_for('monitor') }}">click here</a>.</p>
+        </div>
+    </div>
+</body>
+</html>

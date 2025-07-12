@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity History - Dog Tracking System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Dog Tracking System</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="{{ url_for('monitor') }}" class="nav-link">
+                        <span class="nav-text">Live Monitor</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('boundaries') }}" class="nav-link">
+                        <span class="nav-text">Boundaries</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('dogs') }}" class="nav-link">
+                        <span class="nav-text">Dogs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('tts') }}" class="nav-link">
+                        <span class="nav-text">Text-to-Speech</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('settings') }}" class="nav-link">
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{{ url_for('history') }}" class="nav-link">
+                        <span class="nav-text">History</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <div class="top-header">
+                <h1>Activity History</h1>
+                <div class="status-indicator online">
+                    Data Available
+                </div>
+            </div>
+
+            <!-- History Content -->
+            <div class="history-container">
+                <!-- Filter & Search Panel -->
+                <div class="filter-panel">
+                    <div class="panel-header">
+                        <h3>Filters & Search</h3>
+                        <div class="filter-controls">
+                            <button class="btn btn-secondary" id="clearFiltersBtn">Clear Filters</button>
+                            <button class="btn btn-secondary" id="exportDataBtn">Export Data</button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-content">
+                        <div class="filter-row">
+                            <div class="form-group">
+                                <label for="dateFilter">Date Range:</label>
+                                <select id="dateFilter" class="form-select">
+                                    <option value="today" selected>Today</option>
+                                    <option value="yesterday">Yesterday</option>
+                                    <option value="week">Last 7 Days</option>
+                                    <option value="month">Last 30 Days</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" id="customDateRange" style="display: none;">
+                                <label for="startDate">Start Date:</label>
+                                <input type="date" id="startDate" class="form-control">
+                                <label for="endDate">End Date:</label>
+                                <input type="date" id="endDate" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-row">
+                            <div class="form-group">
+                                <label for="dogFilter">Dog:</label>
+                                <select id="dogFilter" class="form-select">
+                                    <option value="all" selected>All Dogs</option>
+                                    <option value="buddy">Buddy</option>
+                                    <option value="max">Max</option>
+                                    <option value="luna">Luna</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="eventFilter">Event Type:</label>
+                                <select id="eventFilter" class="form-select">
+                                    <option value="all" selected>All Events</option>
+                                    <option value="detection">Detection</option>
+                                    <option value="boundary_violation">Boundary Violation</option>
+                                    <option value="tracking_start">Tracking Started</option>
+                                    <option value="tracking_lost">Tracking Lost</option>
+                                    <option value="camera_transition">Camera Transition</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="cameraFilter">Camera:</label>
+                                <select id="cameraFilter" class="form-select">
+                                    <option value="all" selected>All Cameras</option>
+                                    <option value="1">Camera 1 - Front Yard</option>
+                                    <option value="2">Camera 2 - Side Yard</option>
+                                    <option value="3">Camera 3 - Back Yard</option>
+                                    <option value="4">Camera 4 - Gate Area</option>
+                                    <option value="5">Camera 5 - Deck Area</option>
+                                    <option value="6">Camera 6 - Shed Area</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-row">
+                            <div class="form-group">
+                                <label for="searchText">Search:</label>
+                                <input type="text" id="searchText" class="form-control" placeholder="Search events...">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="priorityFilter">Priority:</label>
+                                <select id="priorityFilter" class="form-select">
+                                    <option value="all" selected>All Priorities</option>
+                                    <option value="high">High Priority</option>
+                                    <option value="medium">Medium Priority</option>
+                                    <option value="low">Low Priority</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <button class="btn btn-primary" id="applyFiltersBtn">Apply Filters</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Timeline Panel -->
+                <div class="timeline-panel">
+                    <div class="panel-header">
+                        <h3>Activity Timeline</h3>
+                        <div class="timeline-controls">
+                            <select id="viewMode" class="form-select">
+                                <option value="list" selected>List View</option>
+                                <option value="timeline">Timeline View</option>
+                                <option value="chart">Chart View</option>
+                            </select>
+                            <button class="btn btn-secondary" id="refreshTimelineBtn">Refresh</button>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-content">
+                        <div class="activity-list" id="activityList">
+                            <div class="activity-item priority" data-event="boundary_violation">
+                                <div class="activity-time">
+                                    <div class="time">14:32:15</div>
+                                    <div class="date">Today</div>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-icon violation">!</div>
+                                    <div class="activity-details">
+                                        <div class="activity-title">Boundary Violation</div>
+                                        <div class="activity-description">Buddy crossed front gate boundary</div>
+                                        <div class="activity-meta">
+                                            <span class="activity-dog">Buddy</span>
+                                            <span class="activity-camera">Camera 3</span>
+                                            <span class="activity-confidence">95% confidence</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="activity-actions">
+                                    <button class="btn btn-small btn-secondary">View Image</button>
+                                    <button class="btn btn-small btn-secondary">View Video</button>
+                                </div>
+                            </div>
+
+                            <div class="activity-item warning" data-event="tracking_lost">
+                                <div class="activity-time">
+                                    <div class="time">14:30:42</div>
+                                    <div class="date">Today</div>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-icon tracking">?</div>
+                                    <div class="activity-details">
+                                        <div class="activity-title">Tracking Lost</div>
+                                        <div class="activity-description">Max disappeared from view - likely in dead zone</div>
+                                        <div class="activity-meta">
+                                            <span class="activity-dog">Max</span>
+                                            <span class="activity-camera">Camera 1</span>
+                                            <span class="activity-duration">Lost for 2m 15s</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="activity-actions">
+                                    <button class="btn btn-small btn-secondary">View Path</button>
+                                </div>
+                            </div>
+
+                            <div class="activity-item info" data-event="detection">
+                                <div class="activity-time">
+                                    <div class="time">14:28:17</div>
+                                    <div class="date">Today</div>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-icon detection">👁</div>
+                                    <div class="activity-details">
+                                        <div class="activity-title">Dog Detection</div>
+                                        <div class="activity-description">Max detected entering monitoring area</div>
+                                        <div class="activity-meta">
+                                            <span class="activity-dog">Max</span>
+                                            <span class="activity-camera">Camera 6</span>
+                                            <span class="activity-confidence">92% confidence</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="activity-actions">
+                                    <button class="btn btn-small btn-secondary">View Image</button>
+                                </div>
+                            </div>
+
+                            <div class="activity-item info" data-event="camera_transition">
+                                <div class="activity-time">
+                                    <div class="time">14:25:33</div>
+                                    <div class="date">Today</div>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-icon transition">⇄</div>
+                                    <div class="activity-details">
+                                        <div class="activity-title">Camera Transition</div>
+                                        <div class="activity-description">Buddy moved from Camera 5 to Camera 6</div>
+                                        <div class="activity-meta">
+                                            <span class="activity-dog">Buddy</span>
+                                            <span class="activity-path">Cam 5 → Cam 6</span>
+                                            <span class="activity-duration">Transition: 3.2s</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="activity-actions">
+                                    <button class="btn btn-small btn-secondary">View Path</button>
+                                </div>
+                            </div>
+
+                            <div class="activity-item info" data-event="detection">
+                                <div class="activity-time">
+                                    <div class="time">14:22:05</div>
+                                    <div class="date">Today</div>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-icon person">👤</div>
+                                    <div class="activity-details">
+                                        <div class="activity-title">Person Detection</div>
+                                        <div class="activity-description">Unknown person detected near property line</div>
+                                        <div class="activity-meta">
+                                            <span class="activity-type">Person</span>
+                                            <span class="activity-camera">Camera 2</span>
+                                            <span class="activity-confidence">87% confidence</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="activity-actions">
+                                    <button class="btn btn-small btn-secondary">View Image</button>
+                                    <button class="btn btn-small btn-secondary">View Video</button>
+                                </div>
+                            </div>
+
+                            <div class="activity-item success" data-event="tracking_start">
+                                <div class="activity-time">
+                                    <div class="time">14:15:48</div>
+                                    <div class="date">Today</div>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-icon start">▶</div>
+                                    <div class="activity-details">
+                                        <div class="activity-title">Tracking Started</div>
+                                        <div class="activity-description">Buddy tracking initiated - entering yard</div>
+                                        <div class="activity-meta">
+                                            <span class="activity-dog">Buddy</span>
+                                            <span class="activity-camera">Camera 1</span>
+                                            <span class="activity-confidence">96% confidence</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="activity-actions">
+                                    <button class="btn btn-small btn-secondary">View Image</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pagination">
+                            <button class="btn btn-secondary" id="prevPageBtn">Previous</button>
+                            <span class="page-info">Page 1 of 15</span>
+                            <button class="btn btn-secondary" id="nextPageBtn">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Panel -->
+                <div class="stats-panel">
+                    <div class="panel-header">
+                        <h3>Activity Statistics</h3>
+                        <div class="stats-period">
+                            <select id="statsPeriod" class="form-select">
+                                <option value="today" selected>Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-content">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">47</div>
+                                <div class="stat-label">Total Detections</div>
+                                <div class="stat-change positive">+12 from yesterday</div>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <div class="stat-value">3</div>
+                                <div class="stat-label">Boundary Violations</div>
+                                <div class="stat-change negative">+1 from yesterday</div>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <div class="stat-value">6h 23m</div>
+                                <div class="stat-label">Total Activity Time</div>
+                                <div class="stat-change neutral">Same as yesterday</div>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <div class="stat-value">12</div>
+                                <div class="stat-label">Camera Transitions</div>
+                                <div class="stat-change positive">+3 from yesterday</div>
+                            </div>
+                        </div>
+                        
+                        <div class="dog-activity-stats">
+                            <h4>Dog Activity Summary</h4>
+                            <div class="dog-stats">
+                                <div class="dog-stat">
+                                    <div class="dog-name">Buddy</div>
+                                    <div class="dog-activity">
+                                        <div class="activity-bar">
+                                            <div class="activity-fill" style="width: 75%"></div>
+                                        </div>
+                                        <div class="activity-text">32 detections</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="dog-stat">
+                                    <div class="dog-name">Max</div>
+                                    <div class="dog-activity">
+                                        <div class="activity-bar">
+                                            <div class="activity-fill" style="width: 45%"></div>
+                                        </div>
+                                        <div class="activity-text">15 detections</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="dog-stat">
+                                    <div class="dog-name">Luna</div>
+                                    <div class="dog-activity">
+                                        <div class="activity-bar">
+                                            <div class="activity-fill" style="width: 0%"></div>
+                                        </div>
+                                        <div class="activity-text">0 detections</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="camera-performance">
+                            <h4>Camera Performance</h4>
+                            <div class="camera-stats">
+                                <div class="camera-stat online">
+                                    <div class="camera-name">Camera 1</div>
+                                    <div class="camera-uptime">99.2% uptime</div>
+                                </div>
+                                
+                                <div class="camera-stat online">
+                                    <div class="camera-name">Camera 3</div>
+                                    <div class="camera-uptime">98.7% uptime</div>
+                                </div>
+                                
+                                <div class="camera-stat warning">
+                                    <div class="camera-name">Camera 4</div>
+                                    <div class="camera-uptime">45.3% uptime</div>
+                                </div>
+                                
+                                <div class="camera-stat offline">
+                                    <div class="camera-name">Camera 7</div>
+                                    <div class="camera-uptime">0% uptime</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Panel -->
+                <div class="reports-panel">
+                    <div class="panel-header">
+                        <h3>Reports & Analytics</h3>
+                        <div class="report-controls">
+                            <button class="btn btn-primary" id="generateReportBtn">Generate Report</button>
+                            <button class="btn btn-secondary" id="scheduleReportBtn">Schedule Report</button>
+                        </div>
+                    </div>
+                    
+                    <div class="reports-content">
+                        <div class="report-templates">
+                            <h4>Report Templates</h4>
+                            <div class="template-list">
+                                <div class="template-item">
+                                    <div class="template-name">Daily Activity Summary</div>
+                                    <div class="template-description">Comprehensive daily activity report with detection statistics</div>
+                                    <button class="btn btn-small btn-secondary">Generate</button>
+                                </div>
+                                
+                                <div class="template-item">
+                                    <div class="template-name">Boundary Violation Report</div>
+                                    <div class="template-description">Detailed analysis of boundary violations and patterns</div>
+                                    <button class="btn btn-small btn-secondary">Generate</button>
+                                </div>
+                                
+                                <div class="template-item">
+                                    <div class="template-name">System Performance Report</div>
+                                    <div class="template-description">Camera uptime, detection accuracy, and system health</div>
+                                    <button class="btn btn-small btn-secondary">Generate</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="recent-reports">
+                            <h4>Recent Reports</h4>
+                            <div class="report-list">
+                                <div class="report-item">
+                                    <div class="report-info">
+                                        <div class="report-name">Daily Activity - 2025-07-07</div>
+                                        <div class="report-date">Generated yesterday at 23:59</div>
+                                    </div>
+                                    <div class="report-actions">
+                                        <button class="btn btn-small btn-secondary">Download</button>
+                                        <button class="btn btn-small btn-secondary">View</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="report-item">
+                                    <div class="report-info">
+                                        <div class="report-name">Weekly Summary - Week 27</div>
+                                        <div class="report-date">Generated 3 days ago</div>
+                                    </div>
+                                    <div class="report-actions">
+                                        <button class="btn btn-small btn-secondary">Download</button>
+                                        <button class="btn btn-small btn-secondary">View</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Status Messages -->
+    <div class="status-messages" id="statusMessages"></div>
+
+    <!-- Image/Video Modal -->
+    <div class="media-modal" id="mediaModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="mediaTitle">Event Media</h3>
+                <button class="btn btn-secondary" id="closeMediaBtn">Close</button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" src="" alt="Event Image" style="display: none;">
+                <video id="modalVideo" controls style="display: none;"></video>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/history.js') }}"></script>
+</body>
+</html>

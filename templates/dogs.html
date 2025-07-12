@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Management - Dog Tracking System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Dog Tracking System</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="{{ url_for('monitor') }}" class="nav-link">
+                        <span class="nav-text">Live Monitor</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('boundaries') }}" class="nav-link">
+                        <span class="nav-text">Boundaries</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{{ url_for('dogs') }}" class="nav-link">
+                        <span class="nav-text">Dogs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('tts') }}" class="nav-link">
+                        <span class="nav-text">Text-to-Speech</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('settings') }}" class="nav-link">
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('history') }}" class="nav-link">
+                        <span class="nav-text">History</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <div class="top-header">
+                <h1>Dog Management</h1>
+                <div class="status-indicator online">
+                    0 Dogs Enrolled
+                </div>
+            </div>
+
+            <!-- Dogs Content -->
+            <div class="dogs-container">
+                <!-- Enrolled Dogs Panel -->
+                <div class="dogs-panel">
+                    <div class="panel-header">
+                        <h3>Enrolled Dogs</h3>
+                        <div class="dogs-controls">
+                            <button class="btn btn-primary" id="addDogBtn">Enroll New Dog</button>
+                            <button class="btn btn-secondary" id="refreshDogsBtn">Refresh</button>
+                        </div>
+                    </div>
+                    
+                    <div class="dogs-grid">
+                        <!-- Dog cards will be populated dynamically -->
+                        
+                        <div class="dog-card add-new" id="addNewDogCard">
+                            <div class="add-dog-content">
+                                <div class="add-dog-icon">+</div>
+                                <div class="add-dog-text">Enroll New Dog</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dog Enrollment Panel -->
+                <div class="enrollment-panel">
+                    <div class="panel-header">
+                        <h3>Dog Enrollment</h3>
+                        <div class="enrollment-status">
+                            <span id="enrollmentStatus">Ready for New Enrollment</span>
+                        </div>
+                    </div>
+                    
+                    <div class="enrollment-content">
+                        <div class="enrollment-form">
+                            <div class="form-section">
+                                <h4>Basic Information</h4>
+                                <div class="form-group">
+                                    <label for="dogName">Dog Name:</label>
+                                    <input type="text" id="dogName" class="form-control" placeholder="Enter dog's name">
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="dogBreed">Breed:</label>
+                                        <input type="text" id="dogBreed" class="form-control" placeholder="e.g., Golden Retriever">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dogAge">Age:</label>
+                                        <select id="dogAge" class="form-select">
+                                            <option value="">Select age</option>
+                                            <option value="puppy">Puppy (0-1 year)</option>
+                                            <option value="young">Young (1-3 years)</option>
+                                            <option value="adult">Adult (3-7 years)</option>
+                                            <option value="senior">Senior (7+ years)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="dogDescription">Description/Notes:</label>
+                                    <textarea id="dogDescription" class="form-control" placeholder="Distinctive features, behaviors, etc."></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="form-section">
+                                <h4>Training Images</h4>
+                                <div class="image-upload-area">
+                                    <div class="upload-zone" id="imageUploadZone">
+                                        <div class="upload-content">
+                                            <div class="upload-icon">📸</div>
+                                            <div class="upload-text">
+                                                <div class="upload-primary">Drop photos here or click to browse</div>
+                                                <div class="upload-hint">Upload 20-50 high-quality photos for best results</div>
+                                                <div class="upload-formats">Supports: JPG, PNG, WebP (max 10MB each)</div>
+                                            </div>
+                                        </div>
+                                        <input type="file" id="imageInput" multiple accept="image/jpeg,image/jpg,image/png,image/webp" style="display: none;">
+                                    </div>
+                                    
+                                    <div class="upload-actions">
+                                        <button type="button" class="btn btn-secondary btn-small" id="selectFolderBtn">
+                                            📁 Select Folder
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-small" id="clearImagesBtn">
+                                            🗑️ Clear All
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="upload-guidelines">
+                                        <h5>Image Guidelines:</h5>
+                                        <ul>
+                                            <li>Include various poses and angles</li>
+                                            <li>Different lighting conditions</li>
+                                            <li>Multiple distances from camera</li>
+                                            <li>Both standing and moving positions</li>
+                                            <li>Clear, unobstructed views of the dog</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="uploaded-images" id="uploadedImages" style="display: none;">
+                                    <h5>Uploaded Images (<span id="imageCount">0</span>)</h5>
+                                    <div class="image-grid" id="imageGrid"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-section">
+                                <h4>Photo Guidelines</h4>
+                                <div class="training-guidelines">
+                                    <div class="guidelines-grid">
+                                        <div class="guideline-item">
+                                            <div class="guideline-icon">📐</div>
+                                            <div class="guideline-text">
+                                                <strong>Multiple Angles</strong>
+                                                <p>Front, side, back views</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="guideline-item">
+                                            <div class="guideline-icon">💡</div>
+                                            <div class="guideline-text">
+                                                <strong>Varied Lighting</strong>
+                                                <p>Indoor, outdoor, different times</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="guideline-item">
+                                            <div class="guideline-icon">📏</div>
+                                            <div class="guideline-text">
+                                                <strong>Different Distances</strong>
+                                                <p>Close-up and full body shots</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="guideline-item">
+                                            <div class="guideline-icon">🏃</div>
+                                            <div class="guideline-text">
+                                                <strong>Various Poses</strong>
+                                                <p>Standing, sitting, walking, playing</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="photo-quality-tips">
+                                        <h5>Best Practices:</h5>
+                                        <ul>
+                                            <li>Use good lighting - avoid shadows over the dog</li>
+                                            <li>Keep the dog as the main subject (minimal background clutter)</li>
+                                            <li>Include photos from different days/sessions</li>
+                                            <li>Avoid blurry or low-resolution images</li>
+                                            <li>20-50 high-quality photos work better than 100 poor ones</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="enrollment-actions">
+                                <button class="btn btn-primary" id="startTrainingBtn" disabled>Start Training</button>
+                                <button class="btn btn-secondary" id="clearFormBtn">Clear Form</button>
+                                <button class="btn btn-secondary" id="saveAsDraftBtn">Save as Draft</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training Progress Panel -->
+                <div class="training-panel" id="trainingPanel" style="display: none;">
+                    <div class="panel-header">
+                        <h3>Training Progress</h3>
+                        <div class="training-controls">
+                            <button class="btn btn-secondary" id="pauseTrainingBtn">Pause</button>
+                            <button class="btn btn-danger" id="cancelTrainingBtn">Cancel</button>
+                        </div>
+                    </div>
+                    
+                    <div class="training-content">
+                        <div class="training-status">
+                            <h4 id="trainingDogName">Training: New Dog</h4>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="trainingProgress" style="width: 0%"></div>
+                            </div>
+                            <div class="progress-text">
+                                <span id="trainingStep">Initializing...</span>
+                                <span id="trainingPercent">0%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="training-stages">
+                            <div class="stage-item" id="stage1">
+                                <div class="stage-icon">1</div>
+                                <div class="stage-text">Image Preprocessing</div>
+                                <div class="stage-status">Pending</div>
+                            </div>
+                            
+                            <div class="stage-item" id="stage2">
+                                <div class="stage-icon">2</div>
+                                <div class="stage-text">Feature Extraction</div>
+                                <div class="stage-status">Pending</div>
+                            </div>
+                            
+                            <div class="stage-item" id="stage3">
+                                <div class="stage-icon">3</div>
+                                <div class="stage-text">Model Training</div>
+                                <div class="stage-status">Pending</div>
+                            </div>
+                            
+                            <div class="stage-item" id="stage4">
+                                <div class="stage-icon">4</div>
+                                <div class="stage-text">Validation Testing</div>
+                                <div class="stage-status">Pending</div>
+                            </div>
+                            
+                            <div class="stage-item" id="stage5">
+                                <div class="stage-icon">5</div>
+                                <div class="stage-text">Model Deployment</div>
+                                <div class="stage-status">Pending</div>
+                            </div>
+                        </div>
+                        
+                        <div class="training-log">
+                            <h5>Training Log</h5>
+                            <div class="log-content" id="trainingLog">
+                                <div class="log-entry">Training session started...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dog Configuration Panel -->
+                <div class="dog-config-panel">
+                    <div class="panel-header">
+                        <h3>Dog Configuration</h3>
+                    </div>
+                    
+                    <div class="config-content">
+                        <div class="config-section">
+                            <h4>Boundary Rules</h4>
+                            <div class="dog-selector">
+                                <label for="configDogSelect">Configure Dog:</label>
+                                <select id="configDogSelect" class="form-select">
+                                    <option value="">Select a dog</option>
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                            </div>
+                            
+                            <div class="boundary-rules" id="boundaryRules" style="display: none;">
+                                <div class="rule-item">
+                                    <div class="rule-boundary">Front Gate Area</div>
+                                    <div class="rule-action">
+                                        <select class="form-select">
+                                            <option value="alert">Send Alert</option>
+                                            <option value="warning">Warning Only</option>
+                                            <option value="ignore">Ignore</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="rule-item">
+                                    <div class="rule-boundary">Back Fence Line</div>
+                                    <div class="rule-action">
+                                        <select class="form-select">
+                                            <option value="alert" selected>Send Alert</option>
+                                            <option value="warning">Warning Only</option>
+                                            <option value="ignore">Ignore</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="rule-item">
+                                    <div class="rule-boundary">Pool Safety Zone</div>
+                                    <div class="rule-action">
+                                        <select class="form-select">
+                                            <option value="alert">Send Alert</option>
+                                            <option value="warning" selected>Warning Only</option>
+                                            <option value="ignore">Ignore</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="config-section">
+                            <h4>Alert Settings</h4>
+                            <div class="alert-settings" id="alertSettings" style="display: none;">
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="emailAlerts" checked>
+                                        <span class="checkmark"></span>
+                                        Email Alerts
+                                    </label>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="soundAlerts" checked>
+                                        <span class="checkmark"></span>
+                                        Sound Alerts
+                                    </label>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="alertCooldown">Alert Cooldown:</label>
+                                    <input type="range" id="alertCooldown" min="10" max="300" value="30" class="form-range">
+                                    <span class="range-value">30 seconds</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="config-actions">
+                            <button class="btn btn-primary" id="saveConfigBtn" disabled>Save Configuration</button>
+                            <button class="btn btn-secondary" id="resetConfigBtn">Reset to Defaults</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Status Messages -->
+    <div class="status-messages" id="statusMessages"></div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/dogs.js') }}"></script>
+</body>
+</html>

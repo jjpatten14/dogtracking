@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Dog Tracking System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Dog Tracking System</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="{{ url_for('monitor') }}" class="nav-link">
+                        <span class="nav-text">Live Monitor</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('boundaries') }}" class="nav-link">
+                        <span class="nav-text">Boundaries</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('dogs') }}" class="nav-link">
+                        <span class="nav-text">Dogs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('tts') }}" class="nav-link">
+                        <span class="nav-text">Text-to-Speech</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="{{ url_for('settings') }}" class="nav-link">
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('history') }}" class="nav-link">
+                        <span class="nav-text">History</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <div class="top-header">
+                <h1>System Settings</h1>
+                <div class="status-indicator" id="saveStatus">Ready</div>
+            </div>
+
+            <div class="settings-container">
+                <!-- Camera Configuration Panel -->
+                <div class="settings-panel">
+                    <div class="panel-header">
+                        <h3>Camera Configuration</h3>
+                        <p>Add and manage IP camera streams for multi-camera monitoring</p>
+                    </div>
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <label>IP Camera Management</label>
+                            <div id="camera-list" class="camera-list">
+                                <!-- Camera list will be populated here -->
+                            </div>
+                            <button type="button" onclick="addCamera()" class="btn btn-primary">
+                                Add Camera
+                            </button>
+                            <div class="form-help">
+                                <strong>Supported Formats:</strong><br>
+                                RTSP: <code>rtsp://username:password@192.168.1.100:554/stream</code><br>
+                                HTTP: <code>http://192.168.1.100:8080/video</code><br>
+                                ONVIF: <code>rtsp://admin:password@192.168.1.100:554/onvif1</code>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="active-camera">Primary Camera</label>
+                                <select id="active-camera" class="form-select">
+                                    <option value="0">Camera 1 - Front Yard</option>
+                                    <option value="1">Camera 2 - Side Yard</option>
+                                    <option value="2">Camera 3 - Back Yard</option>
+                                </select>
+                                <div class="form-help">Main camera for boundary configuration</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="camera-layout">Grid Layout</label>
+                                <select id="camera-layout" class="form-select">
+                                    <option value="2x6">2x6 Grid (12 cameras)</option>
+                                    <option value="3x4" selected>3x4 Grid (12 cameras)</option>
+                                    <option value="4x3">4x3 Grid (12 cameras)</option>
+                                    <option value="2x4">2x4 Grid (8 cameras)</option>
+                                </select>
+                                <div class="form-help">Monitor display arrangement</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detection Configuration Panel -->
+                <div class="settings-panel">
+                    <div class="panel-header">
+                        <h3>Detection Configuration</h3>
+                        <p>Configure MegaDetector and dog identification settings</p>
+                    </div>
+                    <div class="panel-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="animal-confidence">Animal Detection Confidence</label>
+                                <input type="range" id="animal-confidence" min="0.1" max="1.0" step="0.05" value="0.7">
+                                <div class="range-value">70%</div>
+                                <div class="form-help">Minimum confidence for animal detection</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="person-confidence">Person Detection Confidence</label>
+                                <input type="range" id="person-confidence" min="0.1" max="1.0" step="0.05" value="0.8">
+                                <div class="range-value">80%</div>
+                                <div class="form-help">Minimum confidence for person detection</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="vehicle-confidence">Vehicle Detection Confidence</label>
+                                <input type="range" id="vehicle-confidence" min="0.1" max="1.0" step="0.05" value="0.6">
+                                <div class="range-value">60%</div>
+                                <div class="form-help">Minimum confidence for vehicle detection</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="dog-id-confidence">Dog ID Confidence</label>
+                                <input type="range" id="dog-id-confidence" min="0.1" max="1.0" step="0.05" value="0.8">
+                                <div class="range-value">80%</div>
+                                <div class="form-help">Minimum confidence for dog identification</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="show-confidence" checked>
+                                    <span class="checkmark"></span>
+                                    Show detection confidence scores
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="show-bounding-boxes" checked>
+                                    <span class="checkmark"></span>
+                                    Show detection bounding boxes
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="enable-cross-camera-tracking" checked>
+                                    <span class="checkmark"></span>
+                                    Enable cross-camera dog tracking
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boundary & Reference Points Panel -->
+                <div class="settings-panel">
+                    <div class="panel-header">
+                        <h3>Boundary & Reference Points</h3>
+                        <p>Configure dynamic boundaries and reference point detection</p>
+                    </div>
+                    <div class="panel-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="boundary-color">Boundary Line Color</label>
+                                <div class="color-picker-group">
+                                    <input type="color" id="boundary-color" value="#ff0000">
+                                    <span class="color-preview"></span>
+                                    <span class="color-name">Red</span>
+                                </div>
+                                <div class="form-help">Color for boundary lines on video overlay</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="boundary-thickness">Boundary Line Thickness</label>
+                                <input type="range" id="boundary-thickness" min="1" max="10" value="3">
+                                <div class="range-value">3px</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="reference-tolerance">Reference Point Tolerance</label>
+                                <input type="range" id="reference-tolerance" min="5" max="50" value="15">
+                                <div class="range-value">15px</div>
+                                <div class="form-help">Tolerance for reference point movement detection</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="boundary-opacity">Boundary Opacity</label>
+                                <input type="range" id="boundary-opacity" min="0.1" max="1.0" step="0.1" value="0.7">
+                                <div class="range-value">70%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="enable-dynamic-boundaries" checked>
+                                    <span class="checkmark"></span>
+                                    Enable dynamic boundary adjustment
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="auto-reference-calibration" checked>
+                                    <span class="checkmark"></span>
+                                    Auto-calibrate reference points
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="show-reference-points">
+                                    <span class="checkmark"></span>
+                                    Show reference points on monitor
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alert & Actions Panel -->
+                <div class="settings-panel">
+                    <div class="panel-header">
+                        <h3>Alert & Actions</h3>
+                        <p>Configure boundary violation alerts and system actions</p>
+                    </div>
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <label>Alert Actions</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="action-email">
+                                    <span class="checkmark"></span>
+                                    Send email notifications
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="action-sound" checked>
+                                    <span class="checkmark"></span>
+                                    Play alert sounds
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="action-log" checked>
+                                    <span class="checkmark"></span>
+                                    Log all events to history
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="save-snapshots" checked>
+                                    <span class="checkmark"></span>
+                                    Save detection snapshots
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="email-address">Email Address</label>
+                                <input type="email" id="email-address" placeholder="alerts@example.com">
+                                <div class="form-help">Where to send boundary violation alerts</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="alert-cooldown">Alert Cooldown Period</label>
+                                <input type="range" id="alert-cooldown" min="5" max="300" value="30">
+                                <div class="range-value">30 seconds</div>
+                                <div class="form-help">Minimum time between alerts for same boundary</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance & System Panel -->
+                <div class="settings-panel">
+                    <div class="panel-header">
+                        <h3>Performance & System</h3>
+                        <p>Jetson Orin Nano optimization and system configuration</p>
+                    </div>
+                    <div class="panel-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="processing-fps">Processing Frame Rate</label>
+                                <input type="range" id="processing-fps" min="5" max="30" value="15">
+                                <div class="range-value">15 FPS</div>
+                                <div class="form-help">Frames per second for AI processing</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="frame-skip">Frame Skip Factor</label>
+                                <input type="range" id="frame-skip" min="1" max="10" value="2">
+                                <div class="range-value">Process every 2nd frame</div>
+                                <div class="form-help">Skip frames to improve performance</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="gpu-memory-limit">GPU Memory Limit</label>
+                                <input type="range" id="gpu-memory-limit" min="1" max="8" value="6">
+                                <div class="range-value">6 GB</div>
+                                <div class="form-help">Maximum GPU memory usage (Jetson has 8GB)</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="storage-days">Keep Data (days)</label>
+                                <input type="number" id="storage-days" min="1" max="365" value="30">
+                                <div class="form-help">Auto-delete old snapshots and logs</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="enable-tensorrt">
+                                    <span class="checkmark"></span>
+                                    Enable TensorRT optimization
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="debug-mode">
+                                    <span class="checkmark"></span>
+                                    Enable debug logging
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="auto-restart" checked>
+                                    <span class="checkmark"></span>
+                                    Auto-restart on camera connection loss
+                                </label>
+                                
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="monitor-system-health" checked>
+                                    <span class="checkmark"></span>
+                                    Monitor system health (GPU temp, memory)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="settings-actions">
+                    <button onclick="testCameraConnections()" class="btn btn-outline">
+                        Test All Cameras
+                    </button>
+                    <button onclick="testDetectionModels()" class="btn btn-outline">
+                        Test Detection Models
+                    </button>
+                    <button onclick="resetToDefaults()" class="btn btn-secondary">
+                        Reset to Defaults
+                    </button>
+                    <button onclick="saveSettings()" class="btn btn-primary">
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <div class="status-messages" id="statusMessages"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+</body>
+</html>

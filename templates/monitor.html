@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Monitor - Dog Tracking System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>Dog Tracking System</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active">
+                    <a href="{{ url_for('monitor') }}" class="nav-link">
+                        <span class="nav-text">Live Monitor</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('boundaries') }}" class="nav-link">
+                        <span class="nav-text">Boundaries</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('dogs') }}" class="nav-link">
+                        <span class="nav-text">Dogs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('tts') }}" class="nav-link">
+                        <span class="nav-text">Text-to-Speech</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('settings') }}" class="nav-link">
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('history') }}" class="nav-link">
+                        <span class="nav-text">History</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <div class="top-header">
+                <h1>Live Monitor Dashboard</h1>
+                <div class="status-indicator online" id="systemStatus">
+                    System Online
+                </div>
+            </div>
+
+            <!-- Monitor Content -->
+            <div class="monitor-container">
+                <!-- Camera Grid Panel -->
+                <div class="monitor-panel">
+                    <div class="panel-header">
+                        <h3>Multi-Camera View</h3>
+                        <div class="camera-controls">
+                            <button class="btn btn-primary" id="startCamerasBtn">Start All Cameras</button>
+                            <button class="btn btn-secondary" id="stopCamerasBtn">Stop All Cameras</button>
+                            <select id="gridLayout" class="form-select">
+                                <option value="2x6">2x6 Grid</option>
+                                <option value="3x4" selected>3x4 Grid</option>
+                                <option value="4x3">4x3 Grid</option>
+                            </select>
+                            <button class="btn btn-secondary" id="fullscreenBtn">Fullscreen</button>
+                        </div>
+                    </div>
+                    
+                    <div class="camera-grid-container">
+                        <div class="camera-grid" id="cameraGrid">
+                            <!-- Cameras will be dynamically loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Alerts Panel -->
+                <div class="alerts-panel">
+                    <div class="panel-header">
+                        <h3>Live Alerts</h3>
+                        <div class="alert-controls">
+                            <button class="btn btn-secondary btn-small" id="clearAlertsBtn">Clear All</button>
+                            <button class="btn btn-secondary btn-small" id="muteAlertsBtn">Mute</button>
+                        </div>
+                    </div>
+                    
+                    <div class="alerts-content">
+                        <div class="alert-list" id="alertList">
+                            <!-- Alerts will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status Panel -->
+                <div class="status-panel">
+                    <div class="panel-header">
+                        <h3>System Status</h3>
+                        <div class="status-controls">
+                            <button class="btn btn-secondary btn-small" id="refreshStatusBtn">Refresh</button>
+                        </div>
+                    </div>
+                    
+                    <div class="status-content">
+                        <div class="status-grid">
+                            <div class="status-item">
+                                <div class="status-label">Active Dogs</div>
+                                <div class="status-value" id="activeDogs">0</div>
+                                <div class="status-detail">None detected</div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-label">Cameras Online</div>
+                                <div class="status-value" id="camerasOnline">0/0</div>
+                                <div class="status-detail">0% operational</div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-label">Detection Rate</div>
+                                <div class="status-value" id="detectionRate">0.0</div>
+                                <div class="status-detail">FPS average</div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-label">GPU Usage</div>
+                                <div class="status-value" id="gpuUsage">0%</div>
+                                <div class="status-detail">Jetson Orin</div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-label">Memory Usage</div>
+                                <div class="status-value" id="memoryUsage">0 B</div>
+                                <div class="status-detail">of total</div>
+                            </div>
+                            
+                            <div class="status-item">
+                                <div class="status-label">Uptime</div>
+                                <div class="status-value" id="systemUptime">0s</div>
+                                <div class="status-detail">since restart</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Status Messages -->
+    <div class="status-messages" id="statusMessages"></div>
+
+    <!-- Fullscreen Modal -->
+    <div class="fullscreen-modal" id="fullscreenModal" style="display: none;">
+        <div class="fullscreen-content">
+            <div class="fullscreen-header">
+                <h3 id="fullscreenTitle">Camera View</h3>
+                <button class="btn btn-secondary" id="exitFullscreenBtn">Exit Fullscreen</button>
+            </div>
+            <div class="fullscreen-camera">
+                <img id="fullscreenImage" src="" alt="Fullscreen Camera">
+                <div class="fullscreen-overlay" id="fullscreenDetections"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/monitor.js') }}"></script>
+</body>
+</html>
