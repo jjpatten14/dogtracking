@@ -121,12 +121,6 @@ pytest>=7.4.0  # Testing framework
 ruff>=0.0.275  # Python linter and formatter
 ```
 
-**Cloud and Storage:**
-```bash
-boto3>=1.28.0  # AWS SDK for cloud storage
-botocore>=1.31.0  # AWS core functionality
-```
-
 **Video Processing:**
 ```bash
 av>=10.0.0  # PyAV for video processing
