@@ -19,9 +19,9 @@ tts_audio_*.wav
 *.log
 *.logs
 
-# Model Files (too large for GitHub)
-models/*.pt
-models/*.pth
+# Model Files - handled by Git LFS
+# models/*.pt - tracked by LFS
+# models/*.pth - tracked by LFS
 models/*.onnx
 models/*.pkl
 models/*.h5

@@ -23,40 +23,31 @@ from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 import json
 from PIL import Image
+from project_paths import get_path, PROJECT_ROOT
 
 # Configure logging first
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Legacy function - now replaced by project_paths.py
+# Keeping for backwards compatibility during transition
 def resolve_model_path(path: str) -> str:
     """
-    Resolve model path for cross-platform compatibility (Windows/WSL/Linux)
-    
-    Args:
-        path: Original path (may be WSL format like /mnt/c/...)
-        
-    Returns:
-        Platform-appropriate absolute path
+    DEPRECATED: Use project_paths.get_path() instead.
+    Legacy model path resolution for backwards compatibility.
     """
-    # If it's already a relative path, resolve relative to current directory
+    logger.warning("resolve_model_path() is deprecated. Use project_paths.get_path() instead.")
+    
+    # If it's a relative path, resolve relative to project root
     if not os.path.isabs(path):
-        return str(Path(path).resolve())
+        return str(PROJECT_ROOT / path)
     
-    # Handle WSL mount paths on Windows
-    if platform.system() == "Windows" and path.startswith("/mnt/"):
-        # Convert /mnt/c/... to C:\...
-        if path.startswith("/mnt/c/"):
-            windows_path = path.replace("/mnt/c/", "C:\\").replace("/", "\\")
-            logger.info(f"🔄 Converting WSL path: {path} -> {windows_path}")
-            return windows_path
-        elif path.startswith("/mnt/"):
-            # Handle other drive letters
-            drive_letter = path[5].upper()  # Extract drive letter
-            windows_path = path.replace(f"/mnt/{drive_letter.lower()}/", f"{drive_letter}:\\").replace("/", "\\")
-            logger.info(f"🔄 Converting WSL path: {path} -> {windows_path}")
-            return windows_path
+    # For absolute paths, try to convert them to portable paths
+    path_obj = Path(path)
+    if path_obj.name in ['md_v5a.0.0.pt', 'megadetector.pt']:
+        return str(get_path('megadetector_model'))
     
-    # For Linux/WSL environments or absolute paths, return as-is
+    # Return as-is for other absolute paths
     return str(Path(path).resolve())
 
 # Official MegaDetector imports
@@ -138,9 +129,29 @@ class MegaDetectorAnimalDetector:
     OPTIMIZED: Uses persistent model loading for real-time performance.
     """
     
-    def __init__(self, model_path: str = '/mnt/c/yard/models/md_v5a.0.0.pt'):
-        # Resolve path for cross-platform compatibility
-        self.model_path = resolve_model_path(model_path)
+    def __init__(self, model_path: str = None):
+        # Use portable path system or package default
+        if model_path is None:
+            # Try to use MegaDetector package's built-in model first
+            try:
+                # Check if package has a default model path
+                import megadetector
+                package_model_path = getattr(megadetector, 'DEFAULT_MODEL_PATH', None)
+                if package_model_path and os.path.exists(package_model_path):
+                    self.model_path = package_model_path
+                    logger.info(f"🎯 Using MegaDetector package default model: {package_model_path}")
+                else:
+                    # Fallback to local model file
+                    self.model_path = str(get_path('megadetector_model', create_parents=False))
+            except:
+                # Fallback to local model file if package detection fails
+                self.model_path = str(get_path('megadetector_model', create_parents=False))
+        else:
+            # For custom paths, resolve relative to project root
+            if not os.path.isabs(model_path):
+                self.model_path = str(PROJECT_ROOT / model_path)
+            else:
+                self.model_path = resolve_model_path(model_path)  # Legacy support
         self.model = None
         self.device = None
         self.model_loaded = False
@@ -180,11 +191,11 @@ class MegaDetectorAnimalDetector:
                 logger.error(f"Working directory: {os.getcwd()}")
                 logger.error(f"Platform: {platform.system()}")
                 
-                # Try fallback paths for debugging
+                # Try fallback paths using portable system
                 fallback_paths = [
-                    "models/md_v5a.0.0.pt",  # Relative path
-                    "/mnt/c/yard/models/md_v5a.0.0.pt",  # Original WSL path
-                    "C:/yard/models/md_v5a.0.0.pt",  # Windows forward slash
+                    str(get_path('models') / "md_v5a.0.0.pt"),  # Primary portable path
+                    str(PROJECT_ROOT / "models" / "md_v5a.0.0.pt"),  # Relative to project root
+                    "models/md_v5a.0.0.pt",  # Simple relative path
                 ]
                 
                 logger.info("🔍 Trying fallback paths:")
@@ -197,7 +208,44 @@ class MegaDetectorAnimalDetector:
                         self._fallback_used = True
                         break
                 else:
-                    return False
+                    # Try to download/use MegaDetector default model
+                    logger.warning("🔄 No model file found, attempting to download MegaDetector default model...")
+                    try:
+                        # Try to use a standard MegaDetector model name that the package recognizes
+                        # MegaDetector packages often auto-download models on first use
+                        default_model_names = [
+                            'md_v5a.0.0',  # Standard v5a model name
+                            'megadetector_v5a',  # Alternative name
+                            None  # Some packages auto-download when None
+                        ]
+                        
+                        for model_name in default_model_names:
+                            try:
+                                force_cpu = self.device == 'cpu'
+                                if model_name is None:
+                                    # Try with no model file parameter
+                                    self.detector = load_detector(force_cpu=force_cpu, verbose=True)
+                                else:
+                                    # Try with model name
+                                    self.detector = load_detector(model_file=model_name, force_cpu=force_cpu, verbose=True)
+                                
+                                self.model_loaded = True
+                                self.model_path = model_name or "package_default"
+                                logger.info(f"✅ MegaDetector loaded using package default: {model_name or 'auto-download'}")
+                                return True
+                            except Exception as inner_e:
+                                logger.debug(f"   Failed with model '{model_name}': {inner_e}")
+                                continue
+                        
+                        raise Exception("All default model options failed")
+                        
+                    except Exception as e:
+                        logger.error(f"❌ Failed to load MegaDetector with package defaults: {e}")
+                        logger.error("💡 Please download MegaDetector model manually:")
+                        logger.error("   - Download md_v5a.0.0.pt from Microsoft's MegaDetector releases")
+                        logger.error("   - Place it in the models/ directory")
+                        logger.error("   - Or ensure MegaDetector package can auto-download models")
+                        return False
             
             logger.info(f"✅ Model file found: {self.model_path}")
             

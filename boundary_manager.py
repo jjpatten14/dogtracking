@@ -19,39 +19,30 @@ import platform
 from typing import Dict, List, Tuple, Optional, Set
 from dataclasses import dataclass
 from pathlib import Path
+from project_paths import get_path, PROJECT_ROOT
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Legacy function - now replaced by project_paths.py
+# Keeping for backwards compatibility during transition
 def resolve_config_path(path: str) -> str:
     """
-    Resolve config path for cross-platform compatibility (Windows/WSL/Linux)
-    
-    Args:
-        path: Original path (may be WSL format like /mnt/c/...)
-        
-    Returns:
-        Platform-appropriate absolute path
+    DEPRECATED: Use project_paths.get_path() instead.
+    Legacy config path resolution for backwards compatibility.
     """
-    # If it's already a relative path, resolve relative to current directory
+    logger.warning("resolve_config_path() is deprecated. Use project_paths.get_path() instead.")
+    
+    # If it's a relative path, resolve relative to project root
     if not os.path.isabs(path):
-        return str(Path(path).resolve())
+        return str(PROJECT_ROOT / path)
     
-    # Handle WSL mount paths on Windows
-    if platform.system() == "Windows" and path.startswith("/mnt/"):
-        # Convert /mnt/c/... to C:\...
-        if path.startswith("/mnt/c/"):
-            windows_path = path.replace("/mnt/c/", "C:\\").replace("/", "\\")
-            logger.info(f"🔄 Converting WSL path: {path} -> {windows_path}")
-            return windows_path
-        elif path.startswith("/mnt/"):
-            # Handle other drive letters
-            drive_letter = path[5].upper()  # Extract drive letter
-            windows_path = path.replace(f"/mnt/{drive_letter.lower()}/", f"{drive_letter}:\\").replace("/", "\\")
-            logger.info(f"🔄 Converting WSL path: {path} -> {windows_path}")
-            return windows_path
+    # For absolute paths, try to convert them to portable paths
+    path_obj = Path(path)
+    if path_obj.name == 'boundary_config.json':
+        return str(get_path('boundary_config'))
     
-    # For Linux/WSL environments or absolute paths, return as-is
+    # Return as-is for other absolute paths
     return str(Path(path).resolve())
 
 @dataclass
@@ -84,9 +75,16 @@ class BoundaryManager:
     - Alert integration for boundary violations
     """
     
-    def __init__(self, config_file: str = '/mnt/c/yard/boundary_config.json'):
-        # Resolve path for cross-platform compatibility
-        self.config_file = resolve_config_path(config_file)
+    def __init__(self, config_file: str = None):
+        # Use portable path system
+        if config_file is None:
+            self.config_file = str(get_path('boundary_config'))
+        else:
+            # For custom paths, resolve relative to project root
+            if not os.path.isabs(config_file):
+                self.config_file = str(PROJECT_ROOT / config_file)
+            else:
+                self.config_file = resolve_config_path(config_file)  # Legacy support
         self.zones: Dict[str, BoundaryZone] = {}
         self.dog_states: Dict[str, Dict[str, bool]] = {}  # {dog_id: {zone_name: is_inside}}
         self.last_violations: Dict[str, float] = {}  # Rate limiting for alerts

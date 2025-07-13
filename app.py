@@ -7,6 +7,7 @@ import time
 import os
 import logging
 from datetime import datetime
+from project_paths import get_path, get_snapshot_path, PROJECT_ROOT
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -25,53 +26,48 @@ def save_boundary_snapshot(frame, violation):
         date_str = timestamp.strftime("%Y-%m-%d")
         time_str = timestamp.strftime("%H%M%S")
         
-        # Create date-based subdirectory with cross-platform path
-        base_snapshots_dir = "/mnt/c/yard/snapshots"
-        if os.name == 'nt':  # Windows
-            base_snapshots_dir = "C:/yard/snapshots"
-        
-        snapshots_dir = os.path.join(base_snapshots_dir, date_str)
-        os.makedirs(snapshots_dir, exist_ok=True)
+        # Create date-based subdirectory using portable path system
+        snapshots_dir = get_snapshot_path(date_str, create_parents=True)
         
         # Create descriptive filename
         filename = f"boundary_alert_CAMERA{violation.camera_id}_{violation.event_type.upper()}_{violation.zone_name}_{timestamp.strftime('%Y%m%d_%H%M%S')}.jpg"
-        file_path = os.path.join(snapshots_dir, filename)
+        file_path = snapshots_dir / filename
         
         # Save the frame
-        success = cv2.imwrite(file_path, frame)
+        success = cv2.imwrite(str(file_path), frame)
         
         if success:
-            print(f"📸 Snapshot saved: {file_path}")
+            print(f" Snapshot saved: {file_path}")
             return file_path
         else:
-            print(f"❌ Failed to save snapshot: {file_path}")
+            print(f" Failed to save snapshot: {file_path}")
             return None
             
     except Exception as e:
-        print(f"❌ Error saving snapshot: {e}")
+        print(f" Error saving snapshot: {e}")
         return None
 
 # GPU video acceleration
 try:
     from gpu_video import get_gpu_processor, encode_frame_fast, is_gpu_available
     GPU_VIDEO_AVAILABLE = True
-    print("🚀 GPU video acceleration available")
+    print("GPU video acceleration available")
 except ImportError as e:
     GPU_VIDEO_AVAILABLE = False
-    print(f"⚠️ GPU video acceleration not available: {e}")
+    print(f"GPU video acceleration not available: {e}")
 
 # Grounding DINO disabled for now - focusing on dog detection
 GROUNDING_DINO_AVAILABLE = False
-print("🔧 Grounding DINO disabled - focusing on dog detection performance")
+print("Grounding DINO disabled - focusing on dog detection performance")
 
 # Training manager imports
 try:
     from training_manager import get_training_manager
     TRAINING_MANAGER_AVAILABLE = True
-    print("✅ Training manager loaded successfully")
+    print(" Training manager loaded successfully")
 except ImportError as e:
     TRAINING_MANAGER_AVAILABLE = False
-    print(f"⚠️  Training manager not available: {e}")
+    print(f"  Training manager not available: {e}")
 
 # Animal detection and boundary system imports
 try:
@@ -80,10 +76,10 @@ try:
     from alert_system import get_alert_system, AlertType, AlertSeverity
     from boundary_manager import get_boundary_manager
     SURVEILLANCE_SYSTEMS_AVAILABLE = True
-    print("✅ Surveillance systems loaded successfully")
+    print(" Surveillance systems loaded successfully")
 except ImportError as e:
     SURVEILLANCE_SYSTEMS_AVAILABLE = False
-    print(f"⚠️  Surveillance systems not available: {e}")
+    print(f"  Surveillance systems not available: {e}")
 
 # TTS system imports
 try:
@@ -91,10 +87,10 @@ try:
     import soundfile as sf
     import tempfile
     TTS_AVAILABLE = True
-    print("✅ TTS system loaded successfully")
+    print(" TTS system loaded successfully")
 except ImportError as e:
     TTS_AVAILABLE = False
-    print(f"⚠️  TTS system not available: {e}")
+    print(f"  TTS system not available: {e}")
 
 app = Flask(__name__)
 
@@ -218,43 +214,43 @@ class CameraStream:
     def _connect_camera(self):
         """Internal method to connect to camera with timeout"""
         try:
-            print(f"🔌 Camera {self.camera_id}: Attempting connection to {self.camera_source}")
+            print(f" Camera {self.camera_id}: Attempting connection to {self.camera_source}")
             
             # Support both IP cameras and local cameras
             if isinstance(self.camera_source, str):
-                print(f"📡 Camera {self.camera_id}: Using RTSP/IP camera mode")
+                print(f" Camera {self.camera_id}: Using RTSP/IP camera mode")
                 # IP camera URL
                 self.cap = cv2.VideoCapture(self.camera_source, cv2.CAP_FFMPEG)
                 # Set timeouts for RTSP streams (from working system)
                 self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
                 self.cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)
-                print(f"⏰ Camera {self.camera_id}: Set 5-second timeouts")
+                print(f" Camera {self.camera_id}: Set 5-second timeouts")
             else:
-                print(f"🎥 Camera {self.camera_id}: Using local camera mode")
+                print(f" Camera {self.camera_id}: Using local camera mode")
                 # Local camera index
                 self.cap = cv2.VideoCapture(self.camera_source)
             
-            print(f"🔧 Camera {self.camera_id}: Setting video properties...")
+            print(f" Camera {self.camera_id}: Setting video properties...")
             # Set properties (use camera's native resolution for best performance)
             self.cap.set(cv2.CAP_PROP_FPS, 15)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             
-            print(f"🧪 Camera {self.camera_id}: Testing connection...")
+            print(f" Camera {self.camera_id}: Testing connection...")
             # Test camera connection
             ret, test_frame = self.cap.read()
             if not ret or test_frame is None:
                 raise Exception("Failed to read test frame from camera")
             
-            print(f"✅ Camera {self.camera_id}: Connected! Frame size: {test_frame.shape}")
+            print(f" Camera {self.camera_id}: Connected! Frame size: {test_frame.shape}")
             self.latest_frame = test_frame.copy()
             
             self.running = True
             self.thread = Thread(target=self._capture_frames, daemon=True)
             self.thread.start()
-            print(f"🎬 Camera {self.camera_id}: Frame capture thread started successfully")
+            print(f" Camera {self.camera_id}: Frame capture thread started successfully")
             
         except Exception as e:
-            print(f"❌ Camera {self.camera_id}: Connection failed - {e}")
+            print(f" Camera {self.camera_id}: Connection failed - {e}")
             self.last_error = str(e)
             self.running = False
             if self.cap:
@@ -312,14 +308,14 @@ class MultiCameraManager:
         
     def add_camera(self, camera_id, camera_url):
         """Add a camera to the manager"""
-        print(f"🎥 Adding camera {camera_id} with URL: {camera_url}")
+        print(f" Adding camera {camera_id} with URL: {camera_url}")
         if camera_id not in self.cameras:
             self.cameras[camera_id] = CameraStream(camera_url, camera_id)
             result = self.cameras[camera_id].start()
-            print(f"📡 Camera {camera_id} start result: {result}")
+            print(f" Camera {camera_id} start result: {result}")
             return result
         else:
-            print(f"⚠️  Camera {camera_id} already exists")
+            print(f"  Camera {camera_id} already exists")
         return False
         
     def remove_camera(self, camera_id):
@@ -341,37 +337,37 @@ class MultiCameraManager:
         
     def update_cameras_from_settings(self):
         """Update cameras based on settings"""
-        print("🔧 Loading settings for camera update...")
+        print(" Loading settings for camera update...")
         settings = load_settings()
         camera_urls = settings.get('camera_urls', [])
         
-        print(f"🎯 Processing {len(camera_urls)} camera URLs from settings")
+        print(f" Processing {len(camera_urls)} camera URLs from settings")
         
         # Stop and remove cameras that are no longer in settings
         current_ids = list(self.cameras.keys())
         for cam_id in current_ids:
             if cam_id > len(camera_urls):
-                print(f"🗑️  Removing camera {cam_id} (no longer in settings)")
+                print(f"  Removing camera {cam_id} (no longer in settings)")
                 self.remove_camera(cam_id)
         
         # Add or update cameras from settings
         for i, url in enumerate(camera_urls):
             camera_id = i + 1
             if url:  # Only add if URL is not empty
-                print(f"🔄 Processing camera {camera_id}: {url}")
+                print(f" Processing camera {camera_id}: {url}")
                 if camera_id in self.cameras:
                     # Update existing camera if URL changed
                     if self.cameras[camera_id].camera_source != url:
-                        print(f"🔄 Updating camera {camera_id} URL")
+                        print(f" Updating camera {camera_id} URL")
                         self.cameras[camera_id].set_camera_source(url)
                     else:
-                        print(f"✅ Camera {camera_id} already configured with correct URL")
+                        print(f" Camera {camera_id} already configured with correct URL")
                 else:
                     # Add new camera
-                    print(f"➕ Adding new camera {camera_id}")
+                    print(f" Adding new camera {camera_id}")
                     self.add_camera(camera_id, url)
             else:
-                print(f"⚠️  Skipping camera {camera_id} - empty URL")
+                print(f"  Skipping camera {camera_id} - empty URL")
                     
     def get_all_statuses(self):
         """Get status of all cameras"""
@@ -408,23 +404,23 @@ def load_reference_model():
     """Load Grounding DINO model for reference point detection"""
     global reference_model
     
-    print("🔧 ===== GROUNDING DINO MODEL LOADING DEBUG =====")
-    print(f"🔍 GROUNDING_DINO_AVAILABLE status: {GROUNDING_DINO_AVAILABLE}")
+    print(" ===== GROUNDING DINO MODEL LOADING DEBUG =====")
+    print(f" GROUNDING_DINO_AVAILABLE status: {GROUNDING_DINO_AVAILABLE}")
     
     if not GROUNDING_DINO_AVAILABLE:
-        print("❌ Grounding DINO dependencies not available:")
+        print(" Grounding DINO dependencies not available:")
         print("   - Missing packages: transformers, torch, or PIL")
         print("   - Install with: pip install transformers torch pillow")
         print("   - Reference point detection disabled")
         return False
     
-    print("✅ Grounding DINO dependencies are available")
-    print("📦 Available imports:")
+    print(" Grounding DINO dependencies are available")
+    print(" Available imports:")
     print(f"   - torch: {torch.__version__}")
     print(f"   - transformers: loaded successfully")
     
     try:
-        print("🔄 Attempting to load Grounding DINO model...")
+        print(" Attempting to load Grounding DINO model...")
         print("   - Model: IDEA-Research/grounding-dino-tiny")
         print("   - Using Hugging Face Transformers")
         print("   - This may take a while on first run (downloading model)...")
@@ -437,32 +433,32 @@ def load_reference_model():
         # Move model to GPU if available
         device = "cuda" if torch.cuda.is_available() else "cpu"
         model = model.to(device)
-        print(f"✅ Model loaded on device: {device}")
+        print(f" Model loaded on device: {device}")
         
         if device == "cuda":
-            print(f"🚀 GPU: {torch.cuda.get_device_name(0)}")
-            print(f"💾 GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+            print(f" GPU: {torch.cuda.get_device_name(0)}")
+            print(f" GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
         
-        print("🔄 Setting model to evaluation mode...")
+        print(" Setting model to evaluation mode...")
         model.eval()
-        print("✅ Evaluation mode set")
+        print(" Evaluation mode set")
         
         # Store both processor and model
         reference_model = {'model': model, 'processor': processor}
         
-        print("✅ Grounding DINO loaded successfully for reference point detection")
-        print("🎯 Model ready for natural language object detection")
-        print("📝 Supported prompts: 'tree trunk', 'building corner', 'fence post', etc.")
-        print("🔧 ===== MODEL LOADING COMPLETE =====")
+        print(" Grounding DINO loaded successfully for reference point detection")
+        print(" Model ready for natural language object detection")
+        print(" Supported prompts: 'tree trunk', 'building corner', 'fence post', etc.")
+        print(" ===== MODEL LOADING COMPLETE =====")
         return True
         
     except ImportError as e:
-        print(f"❌ Import error during model loading: {e}")
+        print(f" Import error during model loading: {e}")
         print("   - Check if transformers is properly installed")
         reference_model = None
         return False
     except Exception as e:
-        print(f"❌ Failed to load Grounding DINO: {e}")
+        print(f" Failed to load Grounding DINO: {e}")
         print(f"   - Error type: {type(e).__name__}")
         print(f"   - Error details: {str(e)}")
         import traceback
@@ -476,17 +472,17 @@ def detect_reference_objects(frame):
     global reference_model
     
     if reference_model is None or not GROUNDING_DINO_AVAILABLE:
-        print("⚠️  Grounding DINO model not available")
+        print("  Grounding DINO model not available")
         return []
     
     try:
-        print(f"🖼️  ===== GROUNDING DINO DETECTION DEBUG =====")
-        print(f"📏 Original frame shape: {frame.shape}")
+        print(f"  ===== GROUNDING DINO DETECTION DEBUG =====")
+        print(f" Original frame shape: {frame.shape}")
         
         # Convert OpenCV BGR to RGB
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         pil_image = Image.fromarray(frame_rgb)
-        print(f"🖼️  PIL Image size: {pil_image.size}")
+        print(f"  PIL Image size: {pil_image.size}")
         
         # Define static reference point prompts (NO MOVING OBJECTS)
         static_prompts = [
@@ -501,8 +497,8 @@ def detect_reference_objects(frame):
             "chimney"
         ]
         
-        print(f"📝 Detection prompts: {static_prompts}")
-        print(f"🎯 Focus: STATIC objects only (no cars, people, or moving objects)")
+        print(f" Detection prompts: {static_prompts}")
+        print(f" Focus: STATIC objects only (no cars, people, or moving objects)")
         
         # Prepare inputs for Grounding DINO
         model = reference_model['model']
@@ -510,7 +506,7 @@ def detect_reference_objects(frame):
         
         # Join prompts with periods as required by Grounding DINO
         text_prompt = ". ".join(static_prompts) + "."
-        print(f"🔤 Final text prompt: {text_prompt}")
+        print(f" Final text prompt: {text_prompt}")
         
         # Process image and text
         inputs = processor(images=pil_image, text=text_prompt, return_tensors="pt")
@@ -519,7 +515,7 @@ def detect_reference_objects(frame):
         device = next(model.parameters()).device
         inputs = {k: v.to(device) if hasattr(v, 'to') else v for k, v in inputs.items()}
         
-        print(f"🤖 Running Grounding DINO inference on {device}...")
+        print(f" Running Grounding DINO inference on {device}...")
         with torch.no_grad():
             outputs = model(**inputs)
         
@@ -534,16 +530,16 @@ def detect_reference_objects(frame):
         
         detected_objects = []
         
-        print(f"📊 ===== GROUNDING DINO RESULTS =====")
-        print(f"🔍 Raw detections found: {len(results['boxes'])}")
+        print(f" ===== GROUNDING DINO RESULTS =====")
+        print(f" Raw detections found: {len(results['boxes'])}")
         
         if len(results['boxes']) > 0:
             boxes = results['boxes'].cpu().numpy()
             scores = results['scores'].cpu().numpy() 
             labels = results['labels']
             
-            print(f"   📦 Total detections: {len(boxes)}")
-            print(f"   📊 Score range: {scores.min():.3f} - {scores.max():.3f}")
+            print(f"    Total detections: {len(boxes)}")
+            print(f"    Score range: {scores.min():.3f} - {scores.max():.3f}")
             
             for i, (box, score, label) in enumerate(zip(boxes, scores, labels)):
                 x1, y1, x2, y2 = box
@@ -569,21 +565,21 @@ def detect_reference_objects(frame):
         max_reference_points = 10
         detected_objects = detected_objects[:max_reference_points]
         
-        print(f"📊 ===== FINAL STATIC REFERENCE POINTS =====")
-        print(f"🏠 Detected {len(detected_objects)} static reference objects")
+        print(f" ===== FINAL STATIC REFERENCE POINTS =====")
+        print(f" Detected {len(detected_objects)} static reference objects")
         if detected_objects:
-            print(f"🎯 QUALIFIED STATIC REFERENCE POINTS:")
+            print(f" QUALIFIED STATIC REFERENCE POINTS:")
             for obj in detected_objects:
-                print(f"   ✅ {obj['type']} at ({obj['position'][0]}, {obj['position'][1]}) - confidence: {obj['confidence']:.2f}")
+                print(f"    {obj['type']} at ({obj['position'][0]}, {obj['position'][1]}) - confidence: {obj['confidence']:.2f}")
         else:
-            print(f"❌ NO static objects detected")
-            print(f"💡 Try manual reference points or adjust detection thresholds")
-        print(f"📊 ===== DETECTION COMPLETE =====")
+            print(f" NO static objects detected")
+            print(f" Try manual reference points or adjust detection thresholds")
+        print(f" ===== DETECTION COMPLETE =====")
         
         return detected_objects
         
     except Exception as e:
-        print(f"❌ Error in Grounding DINO detection: {e}")
+        print(f" Error in Grounding DINO detection: {e}")
         import traceback
         traceback.print_exc()
         return []
@@ -600,10 +596,10 @@ def save_reference_points():
         }
         with open(REFERENCE_CONFIG_FILE, 'w') as f:
             json.dump(config, f, indent=2)
-        print(f"✅ Reference points saved to {REFERENCE_CONFIG_FILE}")
+        print(f" Reference points saved to {REFERENCE_CONFIG_FILE}")
         return True
     except Exception as e:
-        print(f"❌ Error saving reference points: {e}")
+        print(f" Error saving reference points: {e}")
         return False
 
 def load_reference_points():
@@ -615,13 +611,13 @@ def load_reference_points():
                 config = json.load(f)
             reference_points = config.get('reference_points', [])
             baseline_established = config.get('baseline_established', False)
-            print(f"✅ Loaded {len(reference_points)} reference points from file")
+            print(f" Loaded {len(reference_points)} reference points from file")
             return True
         else:
-            print(f"ℹ️  No reference points file found at {REFERENCE_CONFIG_FILE}")
+            print(f"  No reference points file found at {REFERENCE_CONFIG_FILE}")
             return False
     except Exception as e:
-        print(f"❌ Error loading reference points: {e}")
+        print(f" Error loading reference points: {e}")
         return False
 
 def calculate_camera_movement(baseline_points, current_points, tolerance=10):
@@ -633,8 +629,8 @@ def calculate_camera_movement(baseline_points, current_points, tolerance=10):
         settings = load_settings()
         max_distance = settings.get('reference_tolerance', 100)  # Use configurable threshold
         
-        print(f"🔍 Matching {len(baseline_points)} baseline points with {len(current_points)} current detections")
-        print(f"📏 Using max distance threshold: {max_distance}px")
+        print(f" Matching {len(baseline_points)} baseline points with {len(current_points)} current detections")
+        print(f" Using max distance threshold: {max_distance}px")
         
         # Match points between baseline and current based on proximity and object type
         matched_pairs = []
@@ -645,7 +641,7 @@ def calculate_camera_movement(baseline_points, current_points, tolerance=10):
             best_match = None
             best_distance = float('inf')
             
-            print(f"  🎯 Baseline {i}: {baseline_type} at ({baseline_pos[0]}, {baseline_pos[1]})")
+            print(f"   Baseline {i}: {baseline_type} at ({baseline_pos[0]}, {baseline_pos[1]})")
             
             for j, current_point in enumerate(current_points):
                 current_pos = current_point['position']
@@ -673,31 +669,31 @@ def calculate_camera_movement(baseline_points, current_points, tolerance=10):
                 
                 # Debug: Show detailed comparison
                 distance_ok = distance < max_distance
-                print(f"    🔍 Current {j}: {current_type} at ({current_pos[0]}, {current_pos[1]})")
-                print(f"        Distance: {distance:.1f}px (limit: {max_distance}px) - {'✅' if distance_ok else '❌'}")
-                print(f"        Type match: {type_compatible} - {'✅' if type_compatible else '❌'}")
+                print(f"     Current {j}: {current_type} at ({current_pos[0]}, {current_pos[1]})")
+                print(f"        Distance: {distance:.1f}px (limit: {max_distance}px) - {'' if distance_ok else ''}")
+                print(f"        Type match: {type_compatible} - {'' if type_compatible else ''}")
                 print(f"        Overall valid: {distance_ok and type_compatible}")
                 
                 # Only consider matches within distance and with compatible types
                 if distance < best_distance and distance < max_distance and type_compatible:
                     best_distance = distance
                     best_match = current_point
-                    print(f"      🎯 NEW BEST MATCH! Distance: {distance:.1f}px")
+                    print(f"       NEW BEST MATCH! Distance: {distance:.1f}px")
                 elif not distance_ok:
-                    print(f"      ❌ Rejected: distance {distance:.1f}px > {max_distance}px limit")
+                    print(f"       Rejected: distance {distance:.1f}px > {max_distance}px limit")
                 elif not type_compatible:
-                    print(f"      ❌ Rejected: type mismatch '{baseline_type}' vs '{current_type}'")
+                    print(f"       Rejected: type mismatch '{baseline_type}' vs '{current_type}'")
                 else:
-                    print(f"      ❌ Rejected: distance {distance:.1f}px > current best {best_distance:.1f}px")
+                    print(f"       Rejected: distance {distance:.1f}px > current best {best_distance:.1f}px")
             
             if best_match:
                 matched_pairs.append((baseline_point, best_match))
-                print(f"    ✅ Matched: {baseline_type} -> {best_match.get('type', 'unknown')} (distance: {best_distance:.1f}px)")
+                print(f"     Matched: {baseline_type} -> {best_match.get('type', 'unknown')} (distance: {best_distance:.1f}px)")
             else:
-                print(f"    ❌ No match found for {baseline_type}")
+                print(f"     No match found for {baseline_type}")
         
         if len(matched_pairs) < 2:
-            print(f"⚠️  Not enough matched reference points ({len(matched_pairs)}) for movement calculation")
+            print(f"  Not enough matched reference points ({len(matched_pairs)}) for movement calculation")
             return None
         
         # Calculate average movement
@@ -716,7 +712,7 @@ def calculate_camera_movement(baseline_points, current_points, tolerance=10):
         # Only return movement if it's above tolerance
         movement_magnitude = np.sqrt(avg_dx**2 + avg_dy**2)
         if movement_magnitude > tolerance:
-            print(f"📍 Camera movement detected: dx={avg_dx:.1f}, dy={avg_dy:.1f} (magnitude: {movement_magnitude:.1f}px)")
+            print(f" Camera movement detected: dx={avg_dx:.1f}, dy={avg_dy:.1f} (magnitude: {movement_magnitude:.1f}px)")
             return {
                 'dx': avg_dx,
                 'dy': avg_dy,
@@ -724,11 +720,11 @@ def calculate_camera_movement(baseline_points, current_points, tolerance=10):
                 'matched_points': len(matched_pairs)
             }
         else:
-            print(f"🔒 Camera movement within tolerance: {movement_magnitude:.1f}px <= {tolerance}px")
+            print(f" Camera movement within tolerance: {movement_magnitude:.1f}px <= {tolerance}px")
             return None
             
     except Exception as e:
-        print(f"❌ Error calculating camera movement: {e}")
+        print(f" Error calculating camera movement: {e}")
         return None
 
 def adjust_boundaries_for_movement(movement_offset):
@@ -744,10 +740,10 @@ def adjust_boundaries_for_movement(movement_offset):
         
         # Sanity check: don't apply massive movements (likely detection errors)
         if abs(dx) > 200 or abs(dy) > 200:
-            print(f"⚠️ Rejecting large movement adjustment: dx={dx:.1f}, dy={dy:.1f} (likely detection error)")
+            print(f" Rejecting large movement adjustment: dx={dx:.1f}, dy={dy:.1f} (likely detection error)")
             return False
         
-        print(f"🔄 Adjusting {len(boundary_list)} boundaries for camera movement: dx={dx:.1f}, dy={dy:.1f}")
+        print(f" Adjusting {len(boundary_list)} boundaries for camera movement: dx={dx:.1f}, dy={dy:.1f}")
         
         # Apply offset to all boundaries
         for i, boundary in enumerate(boundary_list):
@@ -757,11 +753,11 @@ def adjust_boundaries_for_movement(movement_offset):
                 new_y = max(0, min(point[1] + dy, 9999))
                 boundary_list[i][j] = [new_x, new_y]
         
-        print(f"✅ Boundaries adjusted for camera movement")
+        print(f" Boundaries adjusted for camera movement")
         return True
         
     except Exception as e:
-        print(f"❌ Error adjusting boundaries: {e}")
+        print(f" Error adjusting boundaries: {e}")
         return False
 
 @app.route('/')
@@ -1030,7 +1026,7 @@ def generate_frames_multi(camera_id):
                                         dog_name = getattr(detection, 'dog_name', 'Unknown Dog')
                                         
                                         # Debug: Show animal detection
-                                        print(f"🐕 Animal detected: {dog_name} at position ({dog_position[0]:.1f}, {dog_position[1]:.1f}) on camera {camera_id}")
+                                        print(f" Animal detected: {dog_name} at position ({dog_position[0]:.1f}, {dog_position[1]:.1f}) on camera {camera_id}")
                                         
                                         # Check for boundary violations
                                         violations = boundary_manager.check_position_violations(
@@ -1042,7 +1038,7 @@ def generate_frames_multi(camera_id):
                                             if boundary_manager.should_send_alert(violation.dog_id, violation.zone_name, violation.event_type):
                                                 if violation.event_type == "entry":
                                                     alert_message = f"{violation.dog_name} entered boundary {violation.zone_name}"
-                                                    print(f"🚨 BOUNDARY ALERT: {alert_message}")
+                                                    print(f" BOUNDARY ALERT: {alert_message}")
                                                     
                                                     # Take snapshot of boundary violation
                                                     save_boundary_snapshot(frame, violation)
@@ -1063,7 +1059,7 @@ def generate_frames_multi(camera_id):
                                                     )
                                                 elif violation.event_type == "exit":
                                                     alert_message = f"{violation.dog_name} left boundary {violation.zone_name}"
-                                                    print(f"✅ BOUNDARY ALERT: {alert_message}")
+                                                    print(f" BOUNDARY ALERT: {alert_message}")
                                                     
                                                     # Take snapshot of boundary violation
                                                     save_boundary_snapshot(frame, violation)
@@ -1138,10 +1134,10 @@ def generate_frames_multi(camera_id):
                                                   cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
                                         
                             except Exception as boundary_error:
-                                print(f"❌ Error drawing boundaries for camera {camera_id}: {boundary_error}")
+                                print(f" Error drawing boundaries for camera {camera_id}: {boundary_error}")
                         
                 except Exception as boundary_error:
-                    print(f"❌ Error drawing boundaries for camera {camera_id}: {boundary_error}")
+                    print(f" Error drawing boundaries for camera {camera_id}: {boundary_error}")
                 
                 # Draw detection results on frame
                 if detections and animal_detector:
@@ -1200,44 +1196,44 @@ def generate_frames_multi(camera_id):
                                 current_movement_offset['dx'] += movement_offset['dx']
                                 current_movement_offset['dy'] += movement_offset['dy']
                                 
-                                print(f"🎯 Boundaries adjusted for camera movement")
-                                print(f"📊 Cumulative movement: dx={current_movement_offset['dx']:.1f}, dy={current_movement_offset['dy']:.1f}")
+                                print(f" Boundaries adjusted for camera movement")
+                                print(f" Cumulative movement: dx={current_movement_offset['dx']:.1f}, dy={current_movement_offset['dy']:.1f}")
                             
                             # Reset error counter on successful detection
                             reference_detection_errors = 0
                         else:
                             # Increment error counter if no objects detected
                             reference_detection_errors += 1
-                            print(f"⚠️ No reference objects detected ({reference_detection_errors}/{max_detection_errors})")
+                            print(f" No reference objects detected ({reference_detection_errors}/{max_detection_errors})")
                             
                             # More graceful degradation - only disable after persistent failures
                             if reference_detection_errors >= max_detection_errors:
-                                print(f"🔄 Many detection failures - attempting recalibration instead of shutdown")
+                                print(f" Many detection failures - attempting recalibration instead of shutdown")
                                 # Try auto-recalibration instead of complete shutdown
                                 try:
                                     recalibration_objects = detect_reference_objects(frame)
                                     if recalibration_objects and len(recalibration_objects) >= 3:
-                                        print(f"✅ Auto-recalibration successful with {len(recalibration_objects)} objects")
+                                        print(f" Auto-recalibration successful with {len(recalibration_objects)} objects")
                                         reference_points.clear()
                                         reference_points.extend(recalibration_objects)
                                         save_reference_points()
                                         reference_detection_errors = 0  # Reset error counter
                                     else:
-                                        print(f"❌ Auto-recalibration failed - temporarily disabling reference tracking")
+                                        print(f" Auto-recalibration failed - temporarily disabling reference tracking")
                                         baseline_established = False
                                 except Exception as recal_error:
-                                    print(f"❌ Recalibration error: {recal_error} - disabling reference tracking")
+                                    print(f" Recalibration error: {recal_error} - disabling reference tracking")
                                     baseline_established = False
                             
                         last_movement_check = current_time
                         
                     except Exception as ref_error:
                         reference_detection_errors += 1
-                        print(f"⚠️ Error in reference point processing ({reference_detection_errors}/{max_detection_errors}): {ref_error}")
+                        print(f" Error in reference point processing ({reference_detection_errors}/{max_detection_errors}): {ref_error}")
                         
                         # Disable reference point detection if too many errors
                         if reference_detection_errors >= max_detection_errors:
-                            print(f"❌ Disabling reference point detection due to repeated errors")
+                            print(f" Disabling reference point detection due to repeated errors")
                             baseline_established = False
                 
                 # Reference point detection and boundary rendering moved above to run every frame
@@ -1327,26 +1323,26 @@ def start_all_cameras():
     """Start all configured cameras"""
     try:
         print("=" * 60)
-        print("🚀 START ALL CAMERAS REQUEST RECEIVED")
+        print(" START ALL CAMERAS REQUEST RECEIVED")
         print("=" * 60)
         
         # Load and display settings
         settings = load_settings()
         camera_urls = settings.get('camera_urls', [])
         
-        print(f"📋 Found {len(camera_urls)} camera(s) in settings:")
+        print(f" Found {len(camera_urls)} camera(s) in settings:")
         for i, url in enumerate(camera_urls):
             print(f"   Camera {i+1}: {url}")
         
         if not camera_urls:
-            print("❌ No cameras configured in settings!")
+            print(" No cameras configured in settings!")
             return jsonify({"status": "error", "message": "No cameras configured in settings"})
         
-        print("\n🔄 Updating camera manager...")
+        print("\n Updating camera manager...")
         camera_manager.update_cameras_from_settings()
         
         # Show current camera manager status
-        print(f"📊 Camera manager status:")
+        print(f" Camera manager status:")
         print(f"   Active cameras: {len(camera_manager.cameras)}")
         for cam_id, camera in camera_manager.cameras.items():
             print(f"   Camera {cam_id}: {camera.camera_source} - Running: {camera.running}")
@@ -1357,7 +1353,7 @@ def start_all_cameras():
             "cameras_initiated": len(camera_urls)
         })
     except Exception as e:
-        print(f"❌ ERROR starting cameras: {e}")
+        print(f" ERROR starting cameras: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)})
@@ -1383,7 +1379,7 @@ def stop_camera():
 def save_boundary():
     global boundary_list
     try:
-        print("💾 ===== SAVE BOUNDARY COORDINATE DEBUG =====")
+        print(" ===== SAVE BOUNDARY COORDINATE DEBUG =====")
         data = request.get_json()
         boundary = data.get('boundary', [])
         
@@ -1395,48 +1391,48 @@ def save_boundary():
         
         if frame is not None:
             frame_height, frame_width = frame.shape[:2]
-            print(f"📺 Server video dimensions during save: {frame_width}x{frame_height}")
+            print(f" Server video dimensions during save: {frame_width}x{frame_height}")
         else:
-            print(f"⚠️  No frame available during save")
+            print(f"  No frame available during save")
             frame_width, frame_height = 640, 480
         
-        print(f"📥 Received {len(boundary)} boundary points from client:")
+        print(f" Received {len(boundary)} boundary points from client:")
         for i, point in enumerate(boundary):
             print(f"   Point {i+1}: pixel({point[0]}, {point[1]})")
             # Check if within current frame bounds
             if point[0] < 0 or point[0] >= frame_width or point[1] < 0 or point[1] >= frame_height:
-                print(f"   ⚠️  Point {i+1} outside frame bounds ({frame_width}x{frame_height})")
+                print(f"     Point {i+1} outside frame bounds ({frame_width}x{frame_height})")
         
         if len(boundary) >= 3:
             boundary_list.append(boundary)
-            print(f"✅ Boundary saved to server (total: {len(boundary_list)})")
-            print("💾 ===== SAVE BOUNDARY DEBUG END =====")
+            print(f" Boundary saved to server (total: {len(boundary_list)})")
+            print(" ===== SAVE BOUNDARY DEBUG END =====")
             return jsonify({"status": "success", "message": "Boundary saved"})
         else:
             return jsonify({"status": "error", "message": "Need at least 3 points for boundary"})
     except Exception as e:
-        print(f"❌ Error saving boundary: {e}")
+        print(f" Error saving boundary: {e}")
         return jsonify({"status": "error", "message": str(e)})
 
 @app.route('/clear_boundaries', methods=['POST'])
 def clear_boundaries():
     global boundary_list
-    print(f"🗑️  Clearing {len(boundary_list)} boundaries...")
+    print(f"  Clearing {len(boundary_list)} boundaries...")
     boundary_list = []
-    print("✅ All boundaries cleared from server")
+    print(" All boundaries cleared from server")
     return jsonify({"status": "success", "message": "Boundaries cleared"})
 
 @app.route('/clear_memory_boundaries', methods=['POST'])
 def clear_memory_boundaries():
     global boundary_list
-    print(f"💾 Clearing {len(boundary_list)} boundaries from memory (keeping file intact)...")
+    print(f" Clearing {len(boundary_list)} boundaries from memory (keeping file intact)...")
     boundary_list = []
-    print("✅ Memory boundaries cleared, file boundaries preserved")
+    print(" Memory boundaries cleared, file boundaries preserved")
     return jsonify({"status": "success", "message": "Memory boundaries cleared"})
 
 @app.route('/get_boundaries')
 def get_boundaries():
-    print(f"📤 Sending {len(boundary_list)} boundaries to client")
+    print(f" Sending {len(boundary_list)} boundaries to client")
     for i, boundary in enumerate(boundary_list):
         print(f"   Boundary {i+1}: {len(boundary)} points")
     return jsonify({"boundaries": boundary_list})
@@ -1453,7 +1449,7 @@ def get_video_dimensions():
         
         if frame is not None:
             height, width = frame.shape[:2]
-            print(f"📺 Actual video dimensions: {width}x{height}")
+            print(f" Actual video dimensions: {width}x{height}")
             return jsonify({
                 "status": "success",
                 "width": width,
@@ -1462,7 +1458,7 @@ def get_video_dimensions():
             })
         else:
             # Return default if no frame available
-            print(f"⚠️  No frame available, returning default dimensions")
+            print(f"  No frame available, returning default dimensions")
             return jsonify({
                 "status": "success", 
                 "width": 640,
@@ -1470,7 +1466,7 @@ def get_video_dimensions():
                 "message": "Default dimensions (no frame available)"
             })
     except Exception as e:
-        print(f"❌ Error getting video dimensions: {e}")
+        print(f" Error getting video dimensions: {e}")
         return jsonify({
             "status": "error",
             "width": 640,
@@ -1515,7 +1511,7 @@ def calibrate_reference_points():
             })
         
         frame = camera.latest_frame.copy()
-        print(f"🎯 Starting reference point calibration on frame: {frame.shape}")
+        print(f" Starting reference point calibration on frame: {frame.shape}")
         
         # Detect reference objects using EfficientDet
         detected_objects = detect_reference_objects(frame)
@@ -1550,7 +1546,7 @@ def calibrate_reference_points():
                 "baseline_established": False
             })
         
-        print(f"🎯 Converted {len(detected_points)} objects to reference points")
+        print(f" Converted {len(detected_points)} objects to reference points")
         
         # Log details about detected reference points
         for point in detected_points:
@@ -1579,7 +1575,7 @@ def calibrate_reference_points():
         })
         
     except Exception as e:
-        print(f"❌ Error during calibration: {e}")
+        print(f" Error during calibration: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({
@@ -1593,7 +1589,7 @@ def clear_reference_points():
     global reference_points, baseline_established, reference_detection_errors
     
     try:
-        print(f"🗑️  Clearing {len(reference_points)} reference points...")
+        print(f"  Clearing {len(reference_points)} reference points...")
         reference_points = []
         baseline_established = False
         reference_detection_errors = 0  # Reset error counter
@@ -1605,14 +1601,14 @@ def clear_reference_points():
                 "message": "Reference points cleared but failed to save to file"
             })
         
-        print("✅ All reference points cleared")
+        print(" All reference points cleared")
         return jsonify({
             "status": "success",
             "message": "All reference points cleared"
         })
         
     except Exception as e:
-        print(f"❌ Error clearing reference points: {e}")
+        print(f" Error clearing reference points: {e}")
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -1675,7 +1671,7 @@ def add_manual_reference_point():
         normalized_x = float(data['x'])
         normalized_y = float(data['y'])
         
-        print(f"📍 Manual reference point request: normalized({normalized_x:.3f}, {normalized_y:.3f})")
+        print(f" Manual reference point request: normalized({normalized_x:.3f}, {normalized_y:.3f})")
         
         # Validate normalized coordinates
         if not (0 <= normalized_x <= 1 and 0 <= normalized_y <= 1):
@@ -1699,7 +1695,7 @@ def add_manual_reference_point():
         pixel_x = int(normalized_x * frame_width)
         pixel_y = int(normalized_y * frame_height)
         
-        print(f"📍 Converted to pixels: ({pixel_x}, {pixel_y}) on frame {frame_width}x{frame_height}")
+        print(f" Converted to pixels: ({pixel_x}, {pixel_y}) on frame {frame_width}x{frame_height}")
         
         # Create manual reference point
         manual_point = {
@@ -1714,15 +1710,15 @@ def add_manual_reference_point():
         # Add to reference points list
         reference_points.append(manual_point)
         
-        print(f"📍 Added manual reference point {manual_point['id']} at pixel coordinates ({pixel_x}, {pixel_y})")
-        print(f"📍 Total reference points after addition: {len(reference_points)}")
-        print(f"📍 Baseline established: {baseline_established}")
-        print(f"📍 Reference points list: {[f'{p['type']}_{p['id']}' for p in reference_points]}")
+        print(f" Added manual reference point {manual_point['id']} at pixel coordinates ({pixel_x}, {pixel_y})")
+        print(f" Total reference points after addition: {len(reference_points)}")
+        print(f" Baseline established: {baseline_established}")
+        print(f" Reference points list: {[f'{p['type']}_{p['id']}' for p in reference_points]}")
         
         # If this is the first reference point, establish baseline
         if not baseline_established:
             baseline_established = True
-            print("📍 Baseline established with manual reference point")
+            print(" Baseline established with manual reference point")
         
         # Save reference points to file
         if not save_reference_points():
@@ -1740,7 +1736,7 @@ def add_manual_reference_point():
         })
         
     except Exception as e:
-        print(f"❌ Error adding manual reference point: {e}")
+        print(f" Error adding manual reference point: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({
@@ -1805,7 +1801,7 @@ def get_cameras():
 def video_feed():
     """Video feed with camera parameter support"""
     camera_id = int(request.args.get('camera', '1'))
-    print(f"📺 Video feed requested for camera {camera_id}")
+    print(f" Video feed requested for camera {camera_id}")
     return Response(generate_frames_multi(camera_id), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # Dog management endpoints
@@ -2135,70 +2131,70 @@ app.config['start_time'] = time.time()
 # Initialize reference point system on startup
 def initialize_reference_system():
     """Initialize reference point system"""
-    print("🔧 ===== REFERENCE POINT SYSTEM STARTUP DEBUG =====")
-    print("🔧 Initializing reference point system...")
+    print(" ===== REFERENCE POINT SYSTEM STARTUP DEBUG =====")
+    print(" Initializing reference point system...")
     
     # Debug dependency status
-    print(f"🔍 Checking Grounding DINO dependencies...")
+    print(f" Checking Grounding DINO dependencies...")
     print(f"   - GROUNDING_DINO_AVAILABLE: {GROUNDING_DINO_AVAILABLE}")
     
     if not GROUNDING_DINO_AVAILABLE:
-        print("❌ Grounding DINO dependencies missing:")
+        print(" Grounding DINO dependencies missing:")
         print("   - Required: transformers, torch, PIL")
         print("   - Install command: pip install transformers torch pillow")
     else:
-        print("✅ Grounding DINO dependencies are available")
+        print(" Grounding DINO dependencies are available")
     
     # Load existing reference points if available
-    print("🔄 Loading existing reference points from file...")
+    print(" Loading existing reference points from file...")
     load_reference_points()
-    print(f"📍 Loaded {len(reference_points)} existing reference points")
+    print(f" Loaded {len(reference_points)} existing reference points")
     
     # Attempt to load Grounding DINO model
-    print("🔄 Attempting to load Grounding DINO model...")
+    print(" Attempting to load Grounding DINO model...")
     if GROUNDING_DINO_AVAILABLE:
         model_loaded = load_reference_model()
         if model_loaded:
-            print("✅ Grounding DINO model loaded successfully - static object detection available")
+            print(" Grounding DINO model loaded successfully - static object detection available")
         else:
-            print("❌ Grounding DINO model failed to load - only manual reference points available")
+            print(" Grounding DINO model failed to load - only manual reference points available")
     else:
-        print("⚠️  Grounding DINO not available - reference point detection disabled")
-        print("   🎯 Manual reference point placement will still work")
+        print("  Grounding DINO not available - reference point detection disabled")
+        print("    Manual reference point placement will still work")
     
-    print("✅ Reference point system initialization complete")
-    print("🔧 ===== STARTUP DEBUG COMPLETE =====")
+    print(" Reference point system initialization complete")
+    print(" ===== STARTUP DEBUG COMPLETE =====")
 
 def initialize_surveillance_systems():
     """Initialize animal detection, boundary system, and dog identification"""
     global animal_detector, dog_identifier, alert_system, boundary_manager
     
-    print("🔧 ===== SURVEILLANCE SYSTEMS STARTUP =====")
-    print("🔧 Initializing surveillance systems...")
+    print(" ===== SURVEILLANCE SYSTEMS STARTUP =====")
+    print(" Initializing surveillance systems...")
     
     if not SURVEILLANCE_SYSTEMS_AVAILABLE:
-        print("❌ Surveillance systems not available - modules not imported properly")
+        print(" Surveillance systems not available - modules not imported properly")
         return
     
     try:
         # Initialize animal detector (MegaDetector)
-        print("🐕 Loading animal detector (MegaDetector)...")
+        print(" Loading animal detector (MegaDetector)...")
         animal_detector = get_animal_detector()
         if animal_detector and animal_detector.is_available():
-            print("✅ MegaDetector loaded successfully")
+            print(" MegaDetector loaded successfully")
             stats = animal_detector.get_stats()
             print(f"   - Model: {stats.get('model_path', 'unknown')}")
             print(f"   - Device: {stats.get('device', 'unknown')}")
         else:
-            print("❌ Failed to load MegaDetector - animal detection disabled")
+            print(" Failed to load MegaDetector - animal detection disabled")
         
         
         # Initialize dog identifier  
-        print("🏷️  Loading dog identifier (MiewID)...")
+        print("  Loading dog identifier (MiewID)...")
         dog_identifier = get_dog_identifier()
         if dog_identifier:
             stats = dog_identifier.get_stats()
-            print("✅ Dog identifier loaded")
+            print(" Dog identifier loaded")
             print(f"   - Total dogs enrolled: {stats.get('total_dogs', 0)}")
             print(f"   - Active dogs: {stats.get('active_dogs', 0)}")
             if stats.get('model_loaded'):
@@ -2206,49 +2202,49 @@ def initialize_surveillance_systems():
             else:
                 print("   - MiewID model: not loaded (will use placeholder)")
         else:
-            print("❌ Failed to load dog identifier")
+            print(" Failed to load dog identifier")
         
         # Initialize alert system
-        print("🚨 Loading alert system...")
+        print(" Loading alert system...")
         alert_system = get_alert_system()
         if alert_system:
             stats = alert_system.get_stats()
-            print("✅ Alert system loaded")
+            print(" Alert system loaded")
             print(f"   - Alerts generated: {stats.get('total_alerts_generated', 0)}")
             print(f"   - Alerts sent: {stats.get('alerts_sent', 0)}")
         else:
-            print("❌ Failed to load alert system")
+            print(" Failed to load alert system")
         
         # Initialize boundary manager
-        print("🏠 Loading boundary manager...")
+        print(" Loading boundary manager...")
         boundary_manager = get_boundary_manager()
         if boundary_manager:
             stats = boundary_manager.get_stats()
-            print("✅ Boundary manager loaded")
+            print(" Boundary manager loaded")
             print(f"   - Total zones: {stats.get('total_zones', 0)}")
             print(f"   - Dogs tracked: {stats.get('total_dogs_tracked', 0)}")
         else:
-            print("❌ Failed to load boundary manager")
+            print(" Failed to load boundary manager")
         
         # Initialize TTS system
         if TTS_AVAILABLE:
-            print("🔊 Loading TTS system...")
+            print(" Loading TTS system...")
             global tts_service
             try:
                 tts_service = TTSService()
-                print("✅ TTS system loaded")
+                print(" TTS system loaded")
                 print("   - Model: Kokoro-82M ready for voice alerts")
             except Exception as tts_error:
-                print(f"❌ Failed to load TTS system: {tts_error}")
+                print(f" Failed to load TTS system: {tts_error}")
                 tts_service = None
         else:
-            print("⚠️  TTS system not available")
+            print("  TTS system not available")
             
     except Exception as e:
-        print(f"❌ Error initializing surveillance systems: {e}")
+        print(f" Error initializing surveillance systems: {e}")
     
-    print("✅ Surveillance systems initialization complete")
-    print("🔧 ===== SURVEILLANCE STARTUP COMPLETE =====")
+    print(" Surveillance systems initialization complete")
+    print(" ===== SURVEILLANCE STARTUP COMPLETE =====")
 
 
 if __name__ == '__main__':
@@ -2256,7 +2252,7 @@ if __name__ == '__main__':
     print("Open your browser to http://localhost:5000")
     
     # Skip reference point system for now - focusing on dog detection
-    print("🔧 Reference point system disabled - focusing on dog detection")
+    print(" Reference point system disabled - focusing on dog detection")
     
     # Initialize surveillance systems
     initialize_surveillance_systems()

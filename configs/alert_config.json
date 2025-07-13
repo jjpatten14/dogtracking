@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "channels": [
+    "log"
+  ],
+  "min_severity": "warning",
+  "cooldown_seconds": 300,
+  "max_alerts_per_hour": 10,
+  "email_settings": {},
+  "webhook_settings": {},
+  "sound_settings": {}
+}

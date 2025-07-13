@@ -1,0 +1,31 @@
+{
+  "hooks": {
+    "PreToolUse": "",
+    "PostToolUse": "",
+    "Notification": "",
+    "Stop": "",
+    "SubagentStop": "",
+    "PreCompact": ""
+  },
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(node:*)",
+      "Bash(claude mcp:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(chmod:*)",
+      "Bash(python3:*)",
+      "Bash(claude hooks:*)",
+      "mcp__memory__search_nodes",
+      "WebFetch(domain:microsoft.github.io)",
+      "Bash(grep:*)",
+      "Bash(python:*)",
+      "Bash(pip3 list:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:stackoverflow.com)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)"
+    ],
+    "deny": []
+  }
+}

@@ -22,6 +22,7 @@ from typing import List, Dict, Optional, Tuple, Any
 from dataclasses import dataclass
 from datetime import datetime
 import threading
+from project_paths import get_path, PROJECT_ROOT
 from pathlib import Path
 
 # Configure logging
@@ -109,7 +110,7 @@ class ArcFaceDogIdentifier:
         self.lock = threading.Lock()
         
         # Storage paths
-        self.profiles_dir = Path('/mnt/c/yard/dog_profiles')
+        self.profiles_dir = get_path('dogs_profiles')
         self.profiles_dir.mkdir(exist_ok=True)
         
         # Load existing profiles
@@ -281,15 +282,15 @@ class ArcFaceDogIdentifier:
         """Try to load MiewID model for inference"""
         try:
             import sys
-            sys.path.append('/mnt/c/yard/models/wbia-plugin-miew-id')
+            sys.path.append(str(PROJECT_ROOT / 'models' / 'wbia-plugin-miew-id'))
             
             from wbia_miew_id.models import MiewIdNet
             from wbia_miew_id.helpers import get_config
             import torch
             
             # Look for deployed model
-            deployed_model_path = '/mnt/c/yard/models/deployed/latest_model.pth'
-            config_path = '/mnt/c/yard/models/wbia-plugin-miew-id/wbia_miew_id/configs/yard_dogs_config.yaml'
+            deployed_model_path = str(get_path('miewid_model'))
+            config_path = str(get_path('miewid_config'))
             
             if not os.path.exists(deployed_model_path):
                 logger.warning(f"No deployed model found at {deployed_model_path}")

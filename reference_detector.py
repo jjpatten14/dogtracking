@@ -22,6 +22,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 import threading
+from project_paths import get_camera_template_path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -83,7 +84,7 @@ class ReferencePointDetector:
     def __init__(self, camera_id: int):
         self.camera_id = camera_id
         self.reference_points: Dict[str, ReferencePoint] = {}
-        self.templates_dir = Path(f'/mnt/c/yard/models/landmark_templates/camera_{camera_id}')
+        self.templates_dir = get_camera_template_path(camera_id)
         self.templates_dir.mkdir(parents=True, exist_ok=True)
         
         # Detection parameters

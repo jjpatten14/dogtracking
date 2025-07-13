@@ -21,6 +21,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from datetime import datetime
 import json
+from project_paths import get_path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -470,7 +471,7 @@ class MultiCameraManager:
                 }
             }
             
-            with open('/mnt/c/yard/camera_config.json', 'w') as f:
+            with open(str(get_path('camera_config')), 'w') as f:
                 json.dump(config_data, f, indent=2)
                 
             logger.info("Camera configurations saved")
@@ -481,7 +482,7 @@ class MultiCameraManager:
     def load_configurations(self):
         """Load camera configurations from file"""
         try:
-            with open('/mnt/c/yard/camera_config.json', 'r') as f:
+            with open(str(get_path('camera_config')), 'r') as f:
                 config_data = json.load(f)
             
             # Load camera configurations

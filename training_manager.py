@@ -16,13 +16,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import uuid
+from project_paths import get_path, PROJECT_ROOT
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 # MiewID imports
 import sys
-sys.path.append('/mnt/c/yard/models/wbia-plugin-miew-id')
+sys.path.append(str(PROJECT_ROOT / 'models' / 'wbia-plugin-miew-id'))
 
 try:
     from wbia_miew_id.train import Trainer
@@ -36,11 +37,11 @@ class TrainingManager:
     """Manages MiewID training for yard dogs"""
     
     def __init__(self):
-        self.base_path = Path('/mnt/c/yard')
-        self.dogs_path = self.base_path / 'dogs'
-        self.models_path = self.base_path / 'models'
+        self.base_path = PROJECT_ROOT
+        self.dogs_path = get_path('dogs')
+        self.models_path = get_path('models')
         self.checkpoints_path = self.models_path / 'checkpoints'
-        self.config_path = self.models_path / 'wbia-plugin-miew-id/wbia_miew_id/configs/yard_dogs_config.yaml'
+        self.config_path = get_path('miewid_config')
         
         # Training state
         self.current_training = None

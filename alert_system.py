@@ -27,6 +27,7 @@ from email.mime.multipart import MIMEMultipart
 from pathlib import Path
 from enum import Enum
 import requests
+from project_paths import get_path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -290,8 +291,8 @@ class WebhookNotifier:
 class AlertSystem:
     """Main alert management system"""
     
-    def __init__(self, config_path: str = '/mnt/c/yard/alert_config.json'):
-        self.config_path = config_path
+    def __init__(self, config_path: str = None):
+        self.config_path = config_path if config_path else str(get_path('alert_config'))
         self.config = AlertConfig()
         self.alerts_history: List[Alert] = []
         self.alert_counts: Dict[str, int] = {}  # For rate limiting
