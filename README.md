@@ -121,6 +121,14 @@ pytest>=7.4.0  # Testing framework
 ruff>=0.0.275  # Python linter and formatter
 ```
 
+**Storage and Configuration:**
+```bash
+python-dotenv>=1.0.0  # Environment variable management
+configparser>=6.0.0  # Configuration file parsing
+jsonschema>=4.18.0  # JSON validation
+msgpack>=1.0.5  # Data serialization
+```
+
 **Video Processing:**
 ```bash
 av>=10.0.0  # PyAV for video processing
@@ -149,27 +157,45 @@ Large AI models are automatically downloaded via Git LFS:
 
 ## Quick Start
 
-1. **Clone the repository**
+### Windows Installation (Recommended)
+
+1. **Clone the repository with Git LFS**
 ```bash
+git lfs install
 git clone https://github.com/jjpatten14/dogtracking.git
 cd dogtracking
 ```
 
-2. **Install dependencies**
+2. **Run automated setup**
 ```bash
-pip install -r requirements.txt
+setup.bat
+```
+This will automatically:
+- Create virtual environment
+- Install all dependencies from requirements.txt
+- Set up PyTorch with CUDA support
+- Install MiewID plugin
+- Create project structure
+- Validate installation
+
+3. **Start the system**
+```bash
+call venv\Scripts\activate.bat
+web.bat
 ```
 
-3. **Configure boundaries**
-Edit `boundary_config.json` to define monitoring zones
+4. **Access web interface**
+Open http://localhost:5000 in your browser
 
-4. **Run the application**
+### Linux Installation
+*Linux setup script not yet implemented. Manual installation required:*
 ```bash
+git lfs install
+git clone https://github.com/jjpatten14/dogtracking.git
+cd dogtracking
+pip install -r requirements.txt
 python app.py
 ```
-
-5. **Access web interface**
-Open http://localhost:5000 in your browser
 
 ## Configuration
 
